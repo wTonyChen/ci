@@ -129,12 +129,15 @@ jobs:
 
           # Build the first product of a target matching a label pattern.
           # $1 = label pattern, $2 = regex the product path must match
+          # $1 = gn ls pattern, $2 = product regex, $3 = optional label filter
           build() {
-            local label out
-            for label in $("$GN" ls out/nx "$1" 2>/dev/null | grep '^//'); do
+            local label out labels
+            labels=$("$GN" ls out/nx "$1" 2>/dev/null | grep '^//')
+            if [ -n "$3" ]; then labels=$(echo "$labels" | grep -F "$3"); fi
+            for label in $labels; do
               out=$("$GN" desc out/nx "$label" outputs 2>/dev/null \
                     | tr ' ' '\n' | grep -E "$2" | head -1 \
-                    | sed 's|^//out/nx/||; s|^//||')   # ninja wants build-dir relative
+                    | sed 's|^//out/nx/||; s|^//||')
               if [ -n "$out" ]; then
                 echo "=== $label -> $out ==="
                 timeout 1800 ninja -C out/nx -j4 "$out" 2>&1 | tail -45
@@ -142,11 +145,11 @@ jobs:
                 return
               fi
             done
-            echo "=== no product for '$1' (regex $2) ==="
-            "$GN" ls out/nx "$1" 2>/dev/null | head -5
+            echo "=== no product for '$1' (regex $2, filter '$3') ==="
+            "$GN" ls out/nx "$1" 2>/dev/null | grep '^//' | head -5
           }
 
           set +e
           build '//starboard/nx/arm64:*' '\.a$'
-          build '//starboard/nx/arm64:*nx_smoke*' '[^.]$'
+          build '//starboard/nx/arm64:*' '[^.]$' 'nx_smoke'
           set -e
