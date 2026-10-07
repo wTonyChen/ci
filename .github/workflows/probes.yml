@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extra portlibs (mesa: GL 探针需要 -ldrm_nouveau)
+      - name: Extra portlibs for mesa (GL probe needs -ldrm_nouveau)
         run: |
           mkdir -p out-logs
           dkp-pacman -S --noconfirm --needed switch-mesa 2>&1 | tee out-logs/install.log
