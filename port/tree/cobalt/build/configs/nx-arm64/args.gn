@@ -33,3 +33,13 @@ use_custom_libcxx_for_host = true
 # is compiled with the host clang, which then pulls in the host's glibc headers.
 # Cobalt's //build/config/BUILDCONFIG.gn honours custom_toolchain for exactly this.
 custom_toolchain = "//starboard/nx/arm64/toolchain:starboard"
+
+# is_clang and friends are BUILDARGS (declared in //build/config/compiler/*.gni),
+# not toolchain args: setting them in the toolchain does nothing, which is why g++
+# kept receiving clang-only flags (-Wthread-safety, -fcolor-diagnostics, -mllvm).
+is_clang = false
+use_lld = false
+use_thin_lto = false
+use_debug_fission = false
+clang_use_chrome_plugins = false
+enable_rust = false
