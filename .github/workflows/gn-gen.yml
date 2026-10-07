@@ -139,54 +139,21 @@ jobs:
           echo "[gn check]"; "$GN" check out/nx '//starboard/nx/arm64/*' 2>&1 | head -25
           set -e
 
-      - name: ninja (Starboard platform library + a real executable)
+      - name: ninja loader_app / cobalt / base
         run: |
           cd "$WORK/src"
-          GN=./buildtools/linux64/gn; [ -x "$GN" ] || GN=gn
-
-          # Build the first product of a target matching a label pattern.
-          # $1 = label pattern, $2 = regex the product path must match
-          # $1 = gn ls pattern, $2 = product regex, $3 = optional label filter
-          build() {
-            local label out labels
-            labels=$("$GN" ls out/nx "$1" 2>/dev/null | grep '^//')
-            if [ -n "$3" ]; then labels=$(echo "$labels" | grep -E "$3"); fi
-            for label in $labels; do
-              out=$("$GN" desc out/nx "$label" outputs 2>/dev/null \
-                    | tr ' ' '\n' | grep -E "$2" | head -1 \
-                    | sed 's|^//out/nx/||; s|^//||')
-              if [ -n "$out" ]; then
-                echo "=== $label -> $out ==="
-                set +e
-                timeout 1800 ninja -C out/nx -j4 "$out" > /tmp/ninja-step.log 2>&1
-                local rc=$?
-                set -e
-                echo "=== ninja exit=$rc ==="
-                echo "--- first 12 errors ---"
-                grep -aE 'FAILED:|error:' /tmp/ninja-step.log | head -12 | cut -c1-200
-                echo "--- include flags of the first compile command ---"
-                grep -am1 -oE '(-isystem|-I|-nostdinc\+\+)[^ ]*' /tmp/ninja-step.log | head -12
-                echo "--- compiler ---"
-                grep -aoE '(aarch64-none-elf-g\+\+|clang\+\+)' /tmp/ninja-step.log | head -2
-                echo "--- tail ---"
-                tail -6 /tmp/ninja-step.log | cut -c1-200
-                return
-              fi
-            done
-            echo "=== no product for '$1' (regex $2, filter '$3') ==="
-            "$GN" ls out/nx "$1" 2>/dev/null | grep '^//' | head -5
-          }
-
           set +e
-          build '//starboard/nx/arm64:*' '\.a$' 'starboard_platform_with_main'
-          build '//starboard/nx/arm64:*' '\.a$'
-          # Chromium base is where the missing POSIX surface (mmap/pipe/eventfd/...)
-          # actually gets used; build it in the starboard toolchain to see the gaps.
-          # Labels without a toolchain suffix live in the default toolchain, which
-          # for this build IS our starboard (devkitA64) toolchain.
-          build '//base:*' '\.a$' '^//base:base$'   # no suffix = default (devkitA64) toolchain
-          set -e
-
+          pick() {   # $1 = substring of the ninja output path
+            ninja -C out/nx -t targets all 2>/dev/null | sed 's/: [^:]*$//' \
+              | grep -E "$1" | head -1
+          }
+          for pat in 'loader_app' 'cobalt' 'content_shell' 'obj/base/libbase\.a'; do
+            T=$(pick "$pat")
+            echo "=== target pattern '$pat' -> ${T:-<none>} ==="
+            [ -z "$T" ] && continue
+            ninja -C out/nx -j4 "$T" 2>&1 | grep -i "error" | sort -u | head -20
+            echo "=== rc=${PIPESTATUS[0]} ==="
+          done
       - name: link probe (which libc/POSIX symbols is the platform missing?)
         run: |
           cd "$WORK/src"
