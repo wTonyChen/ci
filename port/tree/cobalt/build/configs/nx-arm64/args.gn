@@ -5,10 +5,10 @@
 # and silently falls back to the linux-x64x11 platform.
 import("//cobalt/build/configs/linux_modular_common.gn")
 
-# Host-like for the first gn gen pass: the goal is to make gn load the nx
-# starboard platform and report the real list of missing pieces.
+# The target really is aarch64: Starboard derives SB_IS_ARCH_* / SB_SABI_TARGET_ARCH
+# from target_cpu, so this must be arm64 (x64 made it take x86 SIMD paths).
 target_os = "linux"
-target_cpu = "x64"
+target_cpu = "arm64"
 is_debug = false
 symbol_level = 0
 
