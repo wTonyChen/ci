@@ -47,7 +47,7 @@ clang_use_chrome_plugins = false
 # file is only imported through Cobalt targets; targets like //base would otherwise
 # see an empty starboard_path (which makes STARBOARD_CONFIGURATION_INCLUDE empty and
 # drops every SB_* define). It is a declare_args() variable, so set it directly.
-starboard_path = "//starboard/nx/arm64"
+starboard_path = "starboard/nx/arm64"
 
 # Types used by //starboard/BUILD.gn for its aggregate targets; without them
 # :starboard / :starboard_unittests are undefined and gn gen reports
