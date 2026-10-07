@@ -157,8 +157,19 @@ jobs:
                     | sed 's|^//out/nx/||; s|^//||')
               if [ -n "$out" ]; then
                 echo "=== $label -> $out ==="
-                timeout 1800 ninja -C out/nx -j4 "$out" 2>&1 | tail -45
-                echo "=== ninja exit=${PIPESTATUS[0]} ==="
+                set +e
+                timeout 1800 ninja -C out/nx -j4 "$out" > /tmp/ninja-step.log 2>&1
+                local rc=$?
+                set -e
+                echo "=== ninja exit=$rc ==="
+                echo "--- first 12 errors ---"
+                grep -aE 'FAILED:|error:' /tmp/ninja-step.log | head -12 | cut -c1-200
+                echo "--- include flags of the first compile command ---"
+                grep -am1 -oE '(-isystem|-I|-nostdinc\+\+)[^ ]*' /tmp/ninja-step.log | head -12
+                echo "--- compiler ---"
+                grep -aoE '(aarch64-none-elf-g\+\+|clang\+\+)' /tmp/ninja-step.log | head -2
+                echo "--- tail ---"
+                tail -6 /tmp/ninja-step.log | cut -c1-200
                 return
               fi
             done
