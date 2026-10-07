@@ -14,6 +14,19 @@ overridable_gcc_toolchain("starboard") {
     current_os = "linux"
     current_cpu = "arm64"
     is_starboard = true
+
+    # Without these, //build/config/compiler keeps treating the toolchain as clang
+    # and passes clang-only flags (-fcolor-diagnostics, -mno-outline, -Wthread-safety,
+    # -gsimple-template-names, ...) which devkitA64's g++ rejects.
+    is_clang = false
+    use_lld = false
+    use_thin_lto = false
+    use_custom_libcxx = false
+    clang_use_chrome_plugins = false
+    treat_warnings_as_errors = false
+
+    # newlib-based target: use devkitA64's libstdc++, not Chromium's bundled libc++.
+    build_base_with_cpp17 = true
     enable_base_tracing = false
   }
   propagates_configs = !enable_cobalt_hermetic_hacks
