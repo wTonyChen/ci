@@ -54,3 +54,10 @@ starboard_path = "//starboard/nx/arm64"
 # "Unresolved dependencies" (pattern taken from the RDK platform).
 starboard_level_final_executable_type = "executable"
 starboard_level_gtest_target_type = "executable"
+
+# starboard_toolchain / native_toolchain are declare_args() variables in
+# //cobalt/build/configs/initialize_variables.gni, so they can be set here directly
+# instead of relying on its derivation (which uses platform_path.gni and produced a
+# value that did not match current_toolchain, leaving //starboard:starboard undefined).
+starboard_toolchain = "//starboard/nx/arm64/toolchain:starboard"
+native_toolchain = "//starboard/nx/arm64/toolchain:native_target"
