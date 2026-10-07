@@ -35,6 +35,11 @@ overridable_gcc_toolchain("starboard") {
 # Host toolchain for build-time tools; stays x64 on the runner.
 clang_toolchain("native_target") {
   toolchain_args = {
+    # Host tools must stay on clang + libc++: Chromium's bundled libc++ does not
+    # compile with GCC (__builtin_clzg, __has_feature, ...).
+    is_clang = true
+    use_lld = false
+    use_custom_libcxx = true
     is_starboard = false
     current_os = "linux"
     current_cpu = "x64"
