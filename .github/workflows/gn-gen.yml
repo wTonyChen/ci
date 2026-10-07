@@ -148,5 +148,5 @@ jobs:
 
           set +e
           build '//starboard/nx/arm64:*' '\.a$'
-          build '//starboard/examples/hello_world:*' '[^.]$'
+          build '//starboard/nx/arm64:*nx_smoke*' '[^.]$'
           set -e

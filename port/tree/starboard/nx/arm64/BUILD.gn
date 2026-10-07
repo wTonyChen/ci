@@ -32,3 +32,10 @@ if (sb_is_modular && !sb_is_evergreen) {
     public_deps = [ ":starboard_platform" ]
   }
 }
+
+# Chromium-NX smoke application: exists to exercise the link stage (it pulls the
+# libc/POSIX surface Starboard needs). Not part of the shipped browser.
+executable("nx_smoke") {
+  sources = [ "nx_smoke.cc" ]
+  deps = [ ":starboard_platform_with_main" ]
+}

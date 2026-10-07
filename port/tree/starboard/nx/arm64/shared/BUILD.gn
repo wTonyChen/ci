@@ -18,11 +18,10 @@ group("starboard_platform") {
     "//starboard/egl_and_gles",
   ]
 
-  deps = [
-    "//third_party/dav1d",
-    "//third_party/libjpeg_turbo:libjpeg",
-    "//third_party/libvpx",
-  ]
+  # TODO(chromium-nx): media codecs come from devkitPro portlibs (switch-dav1d,
+  # switch-libvpx, ...) rather than building the Linux-flavoured third_party
+  # copies, which pull in glibc-only headers (sys/prctl.h, ...).
+  deps = []
 }
 
 static_library("starboard_platform_sources") {
