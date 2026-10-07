@@ -7,23 +7,39 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkita64:latest      # 官方镜像，免去安装 devkitPro 的环节
     permissions:
-      contents: write            # 把结果日志提交回仓库
+      contents: write                        # 把日志提交回仓库
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install devkitPro (switch-dev + mesa)
+      - name: Extra portlibs (mesa: GL 探针需要 -ldrm_nouveau)
         run: |
-          wget -q https://apt.devkitpro.org/install-devkitpro-pacman -O /tmp/dkp.sh
-          chmod +x /tmp/dkp.sh
-          sudo /tmp/dkp.sh
-          sudo dkp-pacman -Sy --noconfirm
-          sudo dkp-pacman -S --noconfirm --needed switch-dev switch-mesa
+          mkdir -p out-logs
+          dkp-pacman -S --noconfirm --needed switch-mesa 2>&1 | tee out-logs/install.log
 
       - name: Build all probes
         run: |
           export DEVKITPRO=/opt/devkitpro
-          cd probes && bash build-all.sh
+          cd probes
+          set +e
+          bash build-all.sh > "${GITHUB_WORKSPACE}/out-logs/build.log" 2>&1
+          echo "build-all.sh exit=$?" | tee -a "${GITHUB_WORKSPACE}/out-logs/build.log"
+          set -e
+          tail -60 "${GITHUB_WORKSPACE}/out-logs/build.log"
+
+      - name: Collect results
+        if: always()
+        run: |
+          mkdir -p out-logs
+          {
+            echo "run: ${{ github.run_id }}"
+            date -u
+            echo "--- DEVKITPRO ---"; ls -d /opt/devkitpro 2>&1
+            echo "--- 产物 ---"; ls -l probes/build/*/*.nro 2>/dev/null || echo "(没有产出 .nro)"
+          } > out-logs/probes.txt
+          cat out-logs/probes.txt
 
       - name: Upload .nro
         if: always()
@@ -33,23 +49,12 @@ jobs:
           path: probes/build/*/*.nro
           if-no-files-found: warn
 
-      - name: Write result log
+      - name: Commit logs back
         if: always()
         run: |
-          mkdir -p out-logs
-          {
-            echo "run: ${{ github.run_id }}"
-            date -u
-            echo "--- 产物 ---"
-            ls -l probes/build/*/*.nro 2>/dev/null || echo "(没有产出 .nro)"
-          } > out-logs/probes.txt
-          cat out-logs/probes.txt
-
-      - name: Commit result back
-        if: always()
-        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config user.name  "ci-bot"
           git config user.email "ci-bot@users.noreply.github.com"
           git add -A out-logs
-          git commit -m "ci: probes result [skip ci]" || echo "无变化"
-          git push || echo "!! push 失败：Settings → Actions → General → Workflow permissions 需选 Read and write"
+          git commit -m "ci: probes logs [skip ci]" || echo "无变化"
+          git push || echo "!! push 失败：需要 Workflow permissions = Read and write"
