@@ -28,8 +28,8 @@ jobs:
       # _GNU_SOURCE/_DEFAULT_SOURCE: Chromium compiles with -std=c++17 (strict ANSI),
       # which hides newlib's POSIX declarations (CLOCK_THREAD_CPUTIME_ID, setpriority,
       # PRIO_PROCESS, ...) behind feature-test macros.
-      GN_C_FLAGS: -D__SWITCH__ -D__linux__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -I${{ github.workspace }}/work/src/portinc -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57 -Wno-error=multichar -Wno-multichar
-      GN_CXX_FLAGS: -D__SWITCH__ -D__linux__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -I${{ github.workspace }}/work/src/portinc -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57 -Wno-error=multichar -Wno-multichar -include ${{ github.workspace }}/work/src/starboard/nx/arm64/gcc_builtin_compat.h
+      GN_C_FLAGS: -D__SWITCH__ -D__linux__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -I${{ github.workspace }}/work/src/portinc -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57 -Wno-error=multichar -Wno-multichar -I${{ github.workspace }}/work/src/starboard/nx/arm64/fake_headers
+      GN_CXX_FLAGS: -D__SWITCH__ -D__linux__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -I${{ github.workspace }}/work/src/portinc -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57 -Wno-error=multichar -Wno-multichar -include ${{ github.workspace }}/work/src/starboard/nx/arm64/gcc_builtin_compat.h -I${{ github.workspace }}/work/src/starboard/nx/arm64/fake_headers
       GN_LD_FLAGS: -L/opt/devkitpro/libnx/lib
     steps:
       - uses: actions/checkout@v4
