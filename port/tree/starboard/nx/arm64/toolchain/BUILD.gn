@@ -38,7 +38,6 @@ clang_toolchain("native_target") {
     # Host tools must stay on clang + libc++: Chromium's bundled libc++ does not
     # compile with GCC (__builtin_clzg, __has_feature, ...).
     is_clang = true
-    use_lld = false
     use_custom_libcxx = true
     is_starboard = false
     current_os = "linux"
