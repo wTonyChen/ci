@@ -2,7 +2,12 @@ name: gn-gen
 
 # Runs gclient sync + gn gen on GitHub's network (does NOT use the local proxy).
 # Logs are read with:  gh run view <id> -R wTonyChen/ci --log-failed
+# workflow_dispatch only works for workflows present on the DEFAULT branch, and this
+# repo intentionally keeps the default branch (main) empty. Trigger with a tag push:
+#   git tag ci-1 && git push origin ci-1
 on:
+  push:
+    tags: ['ci-*']
   workflow_dispatch:
     inputs:
       cobalt_ref:
@@ -81,7 +86,7 @@ jobs:
       - name: gclient config and sync (Cobalt, no history)
         run: |
           mkdir -p "$WORK" && cd "$WORK"
-          gclient config --name=src "https://github.com/youtube/cobalt.git@${{ inputs.cobalt_ref }}"
+          gclient config --name=src "https://github.com/youtube/cobalt.git@${{ inputs.cobalt_ref || 'refs/heads/27.lts' }}"
           gclient sync --no-history -j4
           echo "--- top-level entries ---"
           ls -1 src | head -30
