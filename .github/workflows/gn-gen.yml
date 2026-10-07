@@ -141,17 +141,15 @@ jobs:
 
       - name: Point ar/ranlib at Chromium's llvm-ar
         run: |
+          set +e
           LLVM="$WORK/src/third_party/llvm-build/Release+Asserts/bin"
-          # The linux toolchain uses the bare name 'ar' (//build/toolchain/linux/BUILD.gn),
-          # and /usr/bin precedes /usr/local/bin here, so overwrite the system tools.
           sudo ln -sf "$LLVM/llvm-ar" /usr/bin/ar
-          if [ -x "$LLVM/llvm-ranlib" ]; then sudo ln -sf "$LLVM/llvm-ranlib" /usr/bin/ranlib; fi
-          hash -r; which ar; ar --version | head -1
-          echo "--- the actual alink command for libprotoc_lib.a ---"
-          T=$(ninja -C out/nx -t targets all 2>/dev/null | sed 's/: [^:]*$//' \
-              | grep -m1 'libprotoc_lib\.a' || true)
-          echo "target: ${T:-<none>}"
-          [ -n "$T" ] && ninja -C out/nx -v "$T" 2>&1 | tail -6 | cut -c1-240
+          [ -x "$LLVM/llvm-ranlib" ] && sudo ln -sf "$LLVM/llvm-ranlib" /usr/bin/ranlib
+          hash -r; echo "which ar: $(which ar)"; ar --version | head -1
+          T=$(ninja -C out/nx -t targets all 2>/dev/null | grep -m1 -oE '^[^ ]*libprotoc_lib\.a')
+          echo "--- alink target: ${T:-<none>} ---"
+          if [ -n "$T" ]; then ninja -C out/nx -v "$T" 2>&1 | tail -6 | cut -c1-240; fi
+          true
 
       - name: ninja loader_app / cobalt / base
         run: |
