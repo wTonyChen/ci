@@ -1,0 +1,10 @@
+# Nintendo Switch (libnx / devkitA64) -- FIRST CUT.
+# target_os/target_cpu are deliberately left host-like for the first gn gen pass:
+# the goal right now is to make gn accept the nx starboard platform and report the
+# real list of missing pieces. The devkitA64 toolchain comes in the next iteration.
+target_os = "linux"
+target_cpu = "x64"
+is_debug = false
+symbol_level = 0
+starboard_target_platform = "nx-arm64"
+enable_vulkan = false

@@ -35,6 +35,21 @@ jobs:
           echo "--- copying port/tree into the Cobalt checkout ---"
           cp -rv port/tree/. cobalt-checkout/src/ 2>&1 | tail -20 || true
 
+      - name: Register the nx platform
+        run: |
+          cd cobalt-checkout/src
+          python3 - <<'PY'
+          p = 'starboard/build/platforms.py'
+          s = open(p).read()
+          if 'nx-arm64' not in s:
+              s = s.replace("    'stub': 'starboard/stub',",
+                            "    'nx-arm64': 'starboard/nx/arm64',\n    'stub': 'starboard/stub',")
+              open(p, 'w').write(s)
+              print('registered nx-arm64')
+          else:
+              print('nx-arm64 already registered')
+          PY
+
       - name: gn gen
         run: |
           cd cobalt-checkout/src
