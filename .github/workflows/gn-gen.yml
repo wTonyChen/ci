@@ -154,7 +154,9 @@ jobs:
           build '//starboard/nx/arm64:*' '\.a$'
           # Chromium base is where the missing POSIX surface (mmap/pipe/eventfd/...)
           # actually gets used; build it in the starboard toolchain to see the gaps.
-          build '//base:*' '\.a$' '(//starboard/nx/arm64/toolchain:starboard)'
+          # Labels without a toolchain suffix live in the default toolchain, which
+          # for this build IS our starboard (devkitA64) toolchain.
+          build '//base:*' '\.a$' '//base:base'
           set -e
 
       - name: link probe (which libc/POSIX symbols is the platform missing?)
