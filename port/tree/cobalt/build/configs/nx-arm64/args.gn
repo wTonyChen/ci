@@ -61,3 +61,8 @@ starboard_level_gtest_target_type = "executable"
 # value that did not match current_toolchain, leaving //starboard:starboard undefined).
 starboard_toolchain = "//starboard/nx/arm64/toolchain:starboard"
 native_toolchain = "//starboard/nx/arm64/toolchain:native_target"
+
+# GCC treats multi-character constants (fourcc-style 'DMP1') as a warning, but the
+# default -Werror=multichar turns it into an error; this is a buildarg, so it has to
+# be set here (a toolchain_args entry is silently ignored).
+treat_warnings_as_errors = false
