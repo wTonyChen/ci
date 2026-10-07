@@ -125,17 +125,20 @@ jobs:
       - name: ninja (Starboard platform library + a real executable)
         run: |
           cd "$WORK/src"
-          GN=./buildtools/linux64/gn; [ -x "$GN" ] || GN=gn
-          build() {   # $1 = gn label; resolves the ninja output path via gn desc
-            local out
-            out=$("$GN" desc out/nx "$1" outputs 2>/dev/null | head -1)
-            echo "=== $1 -> ${out:-<none>} ==="
-            if [ -n "$out" ]; then
-              timeout 1200 ninja -C out/nx -j4 "$out" 2>&1 | tail -45
-              echo "=== ninja exit=${PIPESTATUS[0]} ==="
+          build() {   # $1 = substring of the ninja target name
+            local t
+            t=$(ninja -C out/nx -t targets all 2>/dev/null \
+                | grep -F "$1" | sed 's/: [^:]*$//' | grep -v '^$' | head -1)
+            echo "=== pattern '$1' -> ninja target: ${t:-<none>} ==="
+            if [ -z "$t" ]; then
+              echo "--- candidates ---"
+              ninja -C out/nx -t targets all 2>/dev/null | grep -F "$1" | head -5
+              return
             fi
+            timeout 1800 ninja -C out/nx -j4 "$t" 2>&1 | tail -50
+            echo "=== ninja exit=${PIPESTATUS[0]} ==="
           }
           set +e
-          build //starboard/nx/arm64:starboard_platform
-          build //starboard/examples/hello_world:starboard_hello_world_example
+          build "phony/starboard/nx/arm64:starboard_platform"
+          build "starboard_hello_world_example"
           set -e
