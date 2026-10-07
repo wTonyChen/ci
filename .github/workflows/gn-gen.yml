@@ -29,7 +29,7 @@ jobs:
       # which hides newlib's POSIX declarations (CLOCK_THREAD_CPUTIME_ID, setpriority,
       # PRIO_PROCESS, ...) behind feature-test macros.
       GN_C_FLAGS: -D__SWITCH__ -D__linux__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -I${{ github.workspace }}/work/src/portinc -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57 -Wno-error=multichar -Wno-multichar
-      GN_CXX_FLAGS: -D__SWITCH__ -D__linux__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -I${{ github.workspace }}/work/src/portinc -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57 -Wno-error=multichar -Wno-multichar
+      GN_CXX_FLAGS: -D__SWITCH__ -D__linux__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -I${{ github.workspace }}/work/src/portinc -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57 -Wno-error=multichar -Wno-multichar -include ${{ github.workspace }}/work/src/starboard/nx/arm64/gcc_builtin_compat.h
       GN_LD_FLAGS: -L/opt/devkitpro/libnx/lib
     steps:
       - uses: actions/checkout@v4
@@ -151,7 +151,7 @@ jobs:
             T=$(pick "$pat")
             echo "=== target pattern '$pat' -> ${T:-<none>} ==="
             [ -z "$T" ] && continue
-            ninja -C out/nx -j4 "$T" 2>&1 | grep -i "error" | sort -u | head -20
+            ninja -C out/nx -j4 "$T" 2>&1 | grep -i "error" | sort -u | head -15
             echo "=== rc=${PIPESTATUS[0]} ==="
           done
       - name: link probe (which libc/POSIX symbols is the platform missing?)
