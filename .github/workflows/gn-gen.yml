@@ -60,6 +60,24 @@ jobs:
               print('registered nx-arm64')
           else:
               print('nx-arm64 already registered')
+
+          # starboard_target_platform is declared in platform_path.gni, which is not
+          # imported while gn parses --args, so the argument would be ignored and the
+          # build would fall back to linux-x64x11. Patch the linux branch instead.
+          import re
+          q = 'starboard/build/platform_path.gni'
+          t = open(q).read()
+          if 'nx-arm64' not in t:
+              t2 = re.sub(r'\} else if \(target_os == "linux"\) \{.*?\n      \} else if \(target_os == "ios"\)',
+                          '} else if (target_os == "linux") {\n'
+                          '        starboard_target_platform = "nx-arm64"   # Chromium-NX\n'
+                          '      } else if (target_os == "ios")',
+                          t, count=1, flags=re.S)
+              assert t2 != t, 'platform_path.gni pattern not found'
+              open(q, 'w').write(t2)
+              print('patched platform_path.gni -> nx-arm64')
+          else:
+              print('platform_path.gni already patched')
           PY
 
       - name: gn gen
@@ -75,6 +93,9 @@ jobs:
           fi
           echo "gn args: $ARGS"
           set +e
-          timeout 600 "$GN" gen out/nx --args="$ARGS"
+          timeout 900 "$GN" gen out/nx --args="$ARGS"
           echo "gn gen exit=$?"
+          echo "--- platform actually selected? (build.ninja references) ---"
+          grep -c 'starboard/nx/arm64' out/nx/build.ninja || echo "0 (platform NOT selected)"
+          grep -c 'starboard/linux/x64x11' out/nx/build.ninja || echo "0 (linux platform absent)"
           set -e
