@@ -13,15 +13,13 @@ on:
 jobs:
   gn-gen:
     runs-on: ubuntu-latest
-    container:
-      image: devkitpro/devkita64:latest    # provides aarch64-none-elf-* and libnx
     timeout-minutes: 300
     env:
-      WORK: /mnt/ci
-      GN_CC_COMPILER: aarch64-none-elf-gcc
-      GN_CXX_COMPILER: aarch64-none-elf-g++
-      GN_AR_COMPILER: aarch64-none-elf-ar
-      GN_LD_COMPILER: aarch64-none-elf-g++
+      WORK: ${{ github.workspace }}/work
+      GN_CC_COMPILER: /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc
+      GN_CXX_COMPILER: /opt/devkitpro/devkitA64/bin/aarch64-none-elf-g++
+      GN_AR_COMPILER: /opt/devkitpro/devkitA64/bin/aarch64-none-elf-ar
+      GN_LD_COMPILER: /opt/devkitpro/devkitA64/bin/aarch64-none-elf-g++
       GN_C_FLAGS: -D__SWITCH__ -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57
       GN_CXX_FLAGS: -D__SWITCH__ -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57
       GN_LD_FLAGS: -L/opt/devkitpro/libnx/lib
@@ -33,14 +31,23 @@ jobs:
           git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git /opt/depot_tools
           echo "/opt/depot_tools" >> "$GITHUB_PATH"
 
-      - name: Show mounts and free disk space
+      - name: Free disk space and install devkitA64 from the official image
         run: |
-          df -h / /mnt || true
-          rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc 2>/dev/null || true
-          aarch64-none-elf-gcc --version 2>&1 | head -1 || echo "NO devkitA64!"
-          python3 --version 2>&1 || (apt-get update -qq && apt-get install -y -qq python3) || true
-          git --version
-          df -h / /mnt || true
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost 2>/dev/null || true
+          sudo apt-get clean || true
+          echo "--- after cleanup ---"; df -h / | tail -1
+
+          # devkitA64 without containerising the whole job (the container's writable
+          # layer lives on the same small disk and we cannot free host space from it)
+          docker pull devkitpro/devkita64:latest
+          CID=$(docker create devkitpro/devkita64:latest)
+          sudo mkdir -p /opt/devkitpro
+          sudo docker cp "$CID":/opt/devkitpro/. /opt/devkitpro/
+          docker rm "$CID"
+          /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc --version | head -1
+          echo "--- after devkitPro ---"; df -h / | tail -1
 
       - name: gclient config and sync (Cobalt, no history)
         run: |
