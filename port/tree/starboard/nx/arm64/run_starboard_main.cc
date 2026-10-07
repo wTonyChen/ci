@@ -6,12 +6,13 @@
 
 #include <time.h>
 
+#include "starboard/nx/arm64/application_nx.h"
 #include "starboard/shared/starboard/link_receiver.h"
 #include "starboard/shared/starboard/queue_application.h"
 
 int SbRunStarboardMain(int argc, char** argv, SbEventHandleCallback callback) {
   tzset();
-  starboard::QueueApplication application(callback);
+  starboard::nx::ApplicationNx application(callback);
   starboard::LinkReceiver receiver(&application);
   return application.Run(argc, argv);
 }
