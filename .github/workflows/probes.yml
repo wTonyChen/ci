@@ -1,9 +1,11 @@
 name: probes
 
+# Lives on the default branch (main); the payload is on master.
 on:
-  push:
-    paths: ['probes/**', '.github/workflows/probes.yml']
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/probes.yml']
 
 jobs:
   build:
@@ -12,6 +14,8 @@ jobs:
       image: devkitpro/devkita64:latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master
 
       - name: Install extra portlibs (mesa, needed by the GL probe)
         run: dkp-pacman -S --noconfirm --needed switch-mesa
