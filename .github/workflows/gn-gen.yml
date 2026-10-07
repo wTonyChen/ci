@@ -150,6 +150,7 @@ jobs:
           }
 
           set +e
+          build '//starboard/nx/arm64:*' '\.a$' 'starboard_platform_with_main'
           build '//starboard/nx/arm64:*' '\.a$'
           set -e
 
