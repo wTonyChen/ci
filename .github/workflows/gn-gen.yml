@@ -139,6 +139,17 @@ jobs:
           echo "[gn check]"; "$GN" check out/nx '//starboard/nx/arm64/*' 2>&1 | head -25
           set -e
 
+      - name: Inspect the protobuf archive
+        if: always()
+        run: |
+          cd "$WORK/src"
+          A=out/nx/clang_x64/obj/third_party/protobuf/libprotoc_lib.a
+          echo "--- which ar / version ---"; which ar; ar --version | head -2
+          echo "--- archive ---"; ls -la "$A" 2>&1 | head -2
+          echo "--- members ---"; ar t "$A" 2>&1 | head -3
+          echo "--- index (nm -s) ---"; nm -s "$A" 2>&1 | head -3
+          echo "--- llvm-ar present? ---"; ls "$WORK/src/third_party/llvm-build/Release+Asserts/bin" 2>/dev/null | grep -E '^(llvm-ar|llvm-ranlib|ar)$' | head -5
+
       - name: Point the bare 'ar'/'ranlib' at Chromium's llvm-ar
         run: |
           LLVM="$WORK/src/third_party/llvm-build/Release+Asserts/bin"
