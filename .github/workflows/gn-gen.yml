@@ -169,8 +169,13 @@ jobs:
             T=$(pick "$pat")
             echo "=== target pattern '$pat' -> ${T:-<none>} ==="
             [ -z "$T" ] && continue
-            ninja -C out/nx -j4 "$T" 2>&1 | grep -i "error" | sort -u | head -15
-            echo "=== rc=${PIPESTATUS[0]} ==="
+            ninja -C out/nx -j4 "$T" > /tmp/ninja-step.log 2>&1
+            echo "=== rc=$? ==="
+            grep -ai error /tmp/ninja-step.log | grep -avE '^\[[0-9]+/[0-9]+\]' | sort -u | head -15 | cut -c1-200
+            echo "--- ar / libprotoc command lines ---"
+            grep -aE '(^|[^a-z])ar |llvm-ar|libprotoc' /tmp/ninja-step.log | head -6 | cut -c1-240
+            echo "--- protobuf obj dir ---"
+            ls -la out/nx/clang_x64/obj/third_party/protobuf/ 2>&1 | head -5
           done
       - name: link probe (which libc/POSIX symbols is the platform missing?)
         run: |
