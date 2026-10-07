@@ -90,7 +90,13 @@ jobs:
           set +e
           timeout 900 "$GN" gen out/nx --args="$ARGS"
           echo "gn gen exit=$?"
-          echo "--- platform actually selected? (build.ninja references) ---"
-          grep -c 'starboard/nx/arm64' out/nx/build.ninja || echo "0 (platform NOT selected)"
-          grep -c 'starboard/linux/x64x11' out/nx/build.ninja || echo "0 (linux platform absent)"
+          echo "--- effective args ---"
+          for a in is_cobalt is_starboard starboard_path starboard_target_platform; do
+            echo -n "$a = "
+            "$GN" args out/nx --list 2>/dev/null | grep -A1 "^$a$" | tail -1 | sed 's/.*= //'
+          done
+          echo "--- force-load our platform targets (this is where real errors show up) ---"
+          echo "[gn ls]";    "$GN" ls out/nx '//starboard/nx/arm64/*' 2>&1 | head -12
+          echo "[gn desc]";  "$GN" desc out/nx '//starboard/nx/arm64:platform_targets' 2>&1 | head -12
+          echo "[gn check]"; "$GN" check out/nx '//starboard/nx/arm64/*' 2>&1 | head -25
           set -e
