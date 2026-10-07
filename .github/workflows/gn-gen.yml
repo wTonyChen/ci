@@ -108,6 +108,8 @@ jobs:
             --include='*.gn' --include='*.gni' build starboard cobalt 2>/dev/null | head -12
           echo "--- references inside build/config/BUILDCONFIG.gn ---"
           grep -n 'starboard_toolchain\|cobalt_toolchain' build/config/BUILDCONFIG.gn 2>/dev/null | head -8
+          echo "--- who imports initialize_variables.gni ---"
+          grep -rn 'initialize_variables.gni' --include='*.gn' --include='*.gni' build starboard cobalt 2>/dev/null | head -8
           echo "--- toolchain_variables.gni locations ---"
           find . -name 'toolchain_variables.gni' -not -path './out/*' 2>/dev/null | head -5
 
