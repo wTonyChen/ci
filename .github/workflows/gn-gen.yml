@@ -45,7 +45,7 @@ jobs:
       - name: Overlay port tree
         run: |
           echo "--- copying port/tree into the Cobalt checkout ---"
-          cp -rv "$GITHUB_WORKSPACE/port/tree/." src/ 2>&1 | tail -20 || true
+          cp -rv "$GITHUB_WORKSPACE/port/tree/." "$WORK/src/" 2>&1 | tail -20 || true
 
       - name: Register the nx platform
         run: |
