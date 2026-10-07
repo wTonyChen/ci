@@ -19,5 +19,4 @@ import(
 # linux/x64x11 config would select the x64 SABI and SB_IS_ARCH_X64 would be set.
 sabi_path = "//starboard/sabi/arm64/sabi-v$sb_api_version.json"
 
-gl_type = "angle"
-sb_angle_enable_gl = true
+gl_type = "system_gles2"
