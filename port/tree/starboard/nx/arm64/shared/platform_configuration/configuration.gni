@@ -5,6 +5,6 @@ if (current_toolchain == default_toolchain &&
   cobalt_font_package = "standard"
 } else {
   sb_evergreen_compatible_use_libunwind = use_evergreen
-  sabi_path = "//starboard/sabi/arm64/sabi-v$sb_api_version.json"
+  sabi_path = "//starboard/sabi/arm64/sabi-v18.json"
 }
 sb_enable_benchmark = true
