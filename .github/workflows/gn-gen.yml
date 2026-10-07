@@ -139,16 +139,22 @@ jobs:
           echo "[gn check]"; "$GN" check out/nx '//starboard/nx/arm64/*' 2>&1 | head -25
           set -e
 
-      - name: Point ar/ranlib at Chromium's llvm-ar
+      - name: ar / alink diagnostics
         run: |
           set +e
           LLVM="$WORK/src/third_party/llvm-build/Release+Asserts/bin"
+          echo "llvm-ar: $(ls -la "$LLVM/llvm-ar" 2>&1 | head -1)"
           sudo ln -sf "$LLVM/llvm-ar" /usr/bin/ar
-          [ -x "$LLVM/llvm-ranlib" ] && sudo ln -sf "$LLVM/llvm-ranlib" /usr/bin/ranlib
-          hash -r; echo "which ar: $(which ar)"; ar --version | head -1
-          T=$(ninja -C out/nx -t targets all 2>/dev/null | grep -m1 -oE '^[^ ]*libprotoc_lib\.a')
-          echo "--- alink target: ${T:-<none>} ---"
-          if [ -n "$T" ]; then ninja -C out/nx -v "$T" 2>&1 | tail -6 | cut -c1-240; fi
+          sudo ln -sf "$LLVM/llvm-ranlib" /usr/bin/ranlib 2>/dev/null
+          hash -r
+          echo "which ar: $(which ar)"; echo "real ar: $(readlink -f "$(which ar)" 2>&1)"
+          ar --version 2>&1 | head -2
+          echo "--- targets mentioning protoc ---"
+          ninja -C out/nx -t targets all 2>/dev/null | grep -i 'libprotoc' | head -4
+          echo "--- commands for the first libprotoc target ---"
+          T=$(ninja -C out/nx -t targets all 2>/dev/null | grep -m1 -oE '^[^ ]*libprotoc[^ ]*\.a')
+          echo "target: ${T:-<none>}"
+          if [ -n "$T" ]; then ninja -C out/nx -v "$T" 2>&1 | grep -aE '^(rm|ar|llvm-ar|/usr/bin/ld|clang)' | head -4 | cut -c1-240; fi
           true
 
       - name: ninja loader_app / cobalt / base
