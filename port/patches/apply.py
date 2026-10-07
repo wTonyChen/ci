@@ -43,4 +43,15 @@ patch("starboard/common/time.cc",
       'int64_t CurrentMonotonicThreadTime() {\n#if defined(__SWITCH__)\n  // Nintendo Switch: no per-thread CPU clock (newlib hides\n  // CLOCK_THREAD_CPUTIME_ID behind _POSIX_THREAD_CPUTIME).\n  return 0;\n#else\n  struct timespec ts;\n  if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) != 0) {\n    // This is expected to happen on some systems, like Windows.\n    return 0;\n  }\n  return ToMicroseconds(ts);\n#endif\n}\n',
       "__SWITCH__")
 
+# 4) newlib has no <sys/resource.h> priority API (PRIO_PROCESS, setpriority).
+#    Map the Starboard priority onto a libnx thread priority instead.
+patch("starboard/common/thread_platform_base.cc",
+      '#include "starboard/common/thread.h"\n',
+      '#include "starboard/common/thread.h"\n#if defined(__SWITCH__)\n#include <switch.h>\n#endif\n',
+      "#include <switch.h>")
+patch("starboard/common/thread_platform_base.cc",
+      'bool SetCurrentThreadPriority(ThreadPriority priority) {\n  // setpriority returns 0 on success and -1 on failure. The default nice value\n  // is 0. See https://linux.die.net/man/2/setpriority\n  return setpriority(PRIO_PROCESS, /*who=*/0,\n                     ThreadPriorityToNiceValue(priority)) == 0;\n}\n\n',
+      'bool SetCurrentThreadPriority(ThreadPriority priority) {\n#if defined(__SWITCH__)\n  // libnx thread priorities: lower value = higher priority, 0x2C is the default\n  // for user threads and the useful range is about 0x20..0x3F. Starboard hands us\n  // a POSIX nice value (lower = higher priority), so map it onto that range.\n  int sw_priority = 0x2C + ThreadPriorityToNiceValue(priority) / 5;\n  if (sw_priority < 0x20) sw_priority = 0x20;\n  if (sw_priority > 0x3F) sw_priority = 0x3F;\n  return R_SUCCEEDED(\n      svcSetThreadPriority(threadGetCurHandle(), (u32)sw_priority));\n#else\n  // setpriority returns 0 on success and -1 on failure. The default nice value\n  // is 0. See https://linux.die.net/man/2/setpriority\n  return setpriority(PRIO_PROCESS, /*who=*/0,\n                     ThreadPriorityToNiceValue(priority)) == 0;\n#endif\n}\n\n',
+      "svcSetThreadPriority")
+
 print("all port patches applied")
