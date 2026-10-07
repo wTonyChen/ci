@@ -2,12 +2,9 @@ name: gn-gen
 
 # Runs gclient sync + gn gen on GitHub's network (does NOT use the local proxy).
 # Logs are read with:  gh run view <id> -R wTonyChen/ci --log-failed
-# workflow_dispatch only works for workflows present on the DEFAULT branch, and this
-# repo intentionally keeps the default branch (main) empty. Trigger with a tag push:
-#   git tag ci-1 && git push origin ci-1
+# This workflow lives on the default branch (main) so workflow_dispatch works;
+# the payload lives on master and is checked out explicitly below.
 on:
-  push:
-    tags: ['ci-*']
   workflow_dispatch:
     inputs:
       cobalt_ref:
@@ -36,6 +33,8 @@ jobs:
       GN_LD_FLAGS: -L/opt/devkitpro/libnx/lib
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master
 
       - name: Fetch depot_tools (cache first)
         run: |
