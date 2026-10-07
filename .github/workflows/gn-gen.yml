@@ -156,8 +156,10 @@ jobs:
       - name: link probe (which libc/POSIX symbols is the platform missing?)
         run: |
           cd "$WORK/src"
-          LIB=starboard/obj/starboard/nx/arm64/libstarboard_platform.a
-          ls -la "$LIB" || exit 0
+          LIB=$(ls out/nx/starboard/obj/starboard/nx/arm64/libstarboard_platform.a 2>/dev/null \
+                || find out/nx -name 'libstarboard_platform.a' 2>/dev/null | head -1)
+          echo "LIB=$LIB"
+          ls -la "$LIB" 2>/dev/null || exit 0
           set +e
           /opt/devkitpro/devkitA64/bin/aarch64-none-elf-g++ \
             -o /tmp/nx_link_probe.elf \
