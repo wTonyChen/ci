@@ -100,6 +100,17 @@ jobs:
           cd "$WORK/src"
           python3 "$GITHUB_WORKSPACE/port/patches/apply.py"
 
+      - name: Diagnose toolchain variables
+        run: |
+          cd "$WORK/src"
+          echo "--- assignments of starboard_toolchain / cobalt_toolchain / native_toolchain ---"
+          grep -rnE '^[[:space:]]*(starboard_toolchain|cobalt_toolchain|native_toolchain)[[:space:]]*=' \
+            --include='*.gn' --include='*.gni' build starboard cobalt 2>/dev/null | head -12
+          echo "--- references inside build/config/BUILDCONFIG.gn ---"
+          grep -n 'starboard_toolchain\|cobalt_toolchain' build/config/BUILDCONFIG.gn 2>/dev/null | head -8
+          echo "--- toolchain_variables.gni locations ---"
+          find . -name 'toolchain_variables.gni' -not -path './out/*' 2>/dev/null | head -5
+
       - name: gn gen
         run: |
           cd "$WORK/src"
