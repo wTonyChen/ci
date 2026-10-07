@@ -21,12 +21,6 @@ use_sysroot = false
 use_custom_libc = false
 enable_vulkan = false
 
-# Chromium's bundled libc++ assumes a glibc-style libc (it includes <features.h>),
-# which newlib does not have; without this the build fell back to the HOST's
-# /usr/include/features.h. Use devkitA64's libstdc++ instead, and keep libc++ for
-# host tools (the documented pattern from //build/config/c++/c++.gni).
-use_custom_libcxx = false
-use_custom_libcxx_for_host = true
 
 # Make the devkitA64 starboard toolchain the DEFAULT toolchain for the whole build.
 # Without this only the starboard targets use it and everything else (base, v8, ...)
@@ -34,14 +28,10 @@ use_custom_libcxx_for_host = true
 # Cobalt's //build/config/BUILDCONFIG.gn honours custom_toolchain for exactly this.
 custom_toolchain = "//starboard/nx/arm64/toolchain:starboard"
 
-# is_clang and friends are BUILDARGS (declared in //build/config/compiler/*.gni),
-# not toolchain args: setting them in the toolchain does nothing, which is why g++
-# kept receiving clang-only flags (-Wthread-safety, -fcolor-diagnostics, -mllvm).
-is_clang = false
-use_lld = false
-use_thin_lto = false
-use_debug_fission = false
-clang_use_chrome_plugins = false
+# NOTE: the GCC-specific settings (is_clang etc.) deliberately live in the
+# devkitA64 toolchain's toolchain_args, NOT here: a global is_clang=false also
+# flips the HOST/native toolchain to GCC, and Chromium's bundled libc++ only
+# compiles with clang -> host tools (abseil, protoc, ...) then fail.
 
 # starboard_path is normally derived by //starboard/build/platform_path.gni, but that
 # file is only imported through Cobalt targets; targets like //base would otherwise
@@ -65,4 +55,3 @@ native_toolchain = "//starboard/nx/arm64/toolchain:native_target"
 # GCC treats multi-character constants (fourcc-style 'DMP1') as a warning, but the
 # default -Werror=multichar turns it into an error; this is a buildarg, so it has to
 # be set here (a toolchain_args entry is silently ignored).
-treat_warnings_as_errors = false
