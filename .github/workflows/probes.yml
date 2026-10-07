@@ -1,4 +1,5 @@
 name: probes
+
 on:
   push:
     paths: ['probes/**', '.github/workflows/probes.yml']
@@ -8,53 +9,28 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: devkitpro/devkita64:latest      # 官方镜像，免去安装 devkitPro 的环节
-    permissions:
-      contents: write                        # 把日志提交回仓库
+      image: devkitpro/devkita64:latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extra portlibs for mesa (GL probe needs -ldrm_nouveau)
-        run: |
-          mkdir -p out-logs
-          dkp-pacman -S --noconfirm --needed switch-mesa 2>&1 | tee out-logs/install.log
+      - name: Install extra portlibs (mesa, needed by the GL probe)
+        run: dkp-pacman -S --noconfirm --needed switch-mesa
 
       - name: Build all probes
         run: |
           export DEVKITPRO=/opt/devkitpro
           cd probes
-          set +e
-          bash build-all.sh > "${GITHUB_WORKSPACE}/out-logs/build.log" 2>&1
-          echo "build-all.sh exit=$?" | tee -a "${GITHUB_WORKSPACE}/out-logs/build.log"
-          set -e
-          tail -60 "${GITHUB_WORKSPACE}/out-logs/build.log"
+          bash build-all.sh
 
-      - name: Collect results
+      - name: Show artifacts
         if: always()
         run: |
-          mkdir -p out-logs
-          {
-            echo "run: ${{ github.run_id }}"
-            date -u
-            echo "--- DEVKITPRO ---"; ls -d /opt/devkitpro 2>&1
-            echo "--- 产物 ---"; ls -l probes/build/*/*.nro 2>/dev/null || echo "(没有产出 .nro)"
-          } > out-logs/probes.txt
-          cat out-logs/probes.txt
+          ls -l probes/build/*/*.nro || echo "(no .nro produced)"
 
-      - name: Upload .nro
+      - name: Upload .nro artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: probes-nro
           path: probes/build/*/*.nro
           if-no-files-found: warn
-
-      - name: Commit logs back
-        if: always()
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git config user.name  "ci-bot"
-          git config user.email "ci-bot@users.noreply.github.com"
-          git add -A out-logs
-          git commit -m "ci: probes logs [skip ci]" || echo "无变化"
-          git push || echo "!! push 失败：需要 Workflow permissions = Read and write"

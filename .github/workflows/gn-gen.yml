@@ -1,9 +1,12 @@
 name: gn-gen
+
+# Runs gclient sync + gn gen on GitHub's network (does NOT use the local proxy).
+# Logs are read with:  gh run view <id> -R wTonyChen/ci --log-failed
 on:
   workflow_dispatch:
     inputs:
       cobalt_ref:
-        description: 'Cobalt 分支/修订（gclient 的 url@rev 形式）'
+        description: 'Cobalt revision (gclient url@rev form)'
         default: 'refs/heads/27.lts'
         required: true
 
@@ -11,8 +14,6 @@ jobs:
   gn-gen:
     runs-on: ubuntu-latest
     timeout-minutes: 300
-    permissions:
-      contents: write            # 用于把日志提交回仓库（需仓库设置允许读写）
     steps:
       - uses: actions/checkout@v4
 
@@ -21,25 +22,24 @@ jobs:
           git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git /opt/depot_tools
           echo "/opt/depot_tools" >> "$GITHUB_PATH"
 
-      - name: gclient config + sync (Cobalt, no history)
-        working-directory: ${{ github.workspace }}
+      - name: gclient config and sync (Cobalt, no history)
         run: |
           mkdir -p cobalt-checkout && cd cobalt-checkout
           gclient config --name=src "https://github.com/youtube/cobalt.git@${{ inputs.cobalt_ref }}"
           gclient sync --no-history -j4
-          echo "--- 已同步的顶层目录 ---"
+          echo "--- top-level entries ---"
           ls -1 src | head -30
 
       - name: Overlay port tree
         run: |
-          echo "--- 覆盖 port/tree 到 Cobalt 源码树 ---"
+          echo "--- copying port/tree into the Cobalt checkout ---"
           cp -rv port/tree/. cobalt-checkout/src/ 2>&1 | tail -20 || true
 
-      - name: gn gen (允许失败，日志照样回收)
+      - name: gn gen
         run: |
           cd cobalt-checkout/src
           GN=./buildtools/linux64/gn; [ -x "$GN" ] || GN=gn
-          echo "使用 gn: $GN"
+          echo "using gn: $GN"
           ARGS_FILE=cobalt/build/configs/nx-arm64/args.gn
           if [ -f "$ARGS_FILE" ]; then
             ARGS="$(grep -v '^#' "$ARGS_FILE" | tr '\n' ' ')"
@@ -48,20 +48,6 @@ jobs:
           fi
           echo "gn args: $ARGS"
           set +e
-          timeout 600 "$GN" gen out/nx --args="$ARGS" > "${GITHUB_WORKSPACE}/gn-gen.log" 2>&1
-          echo "gn gen exit=$?" | tee -a "${GITHUB_WORKSPACE}/gn-gen.log"
+          timeout 600 "$GN" gen out/nx --args="$ARGS"
+          echo "gn gen exit=$?"
           set -e
-          echo "--- gn gen 输出（末 120 行）---"
-          tail -120 "${GITHUB_WORKSPACE}/gn-gen.log"
-
-      - name: Commit log back
-        if: always()
-        run: |
-          mkdir -p out-logs
-          cp gn-gen.log out-logs/gn-gen.log 2>/dev/null || echo "(no log produced)" > out-logs/gn-gen.log
-          { echo "ref: ${{ inputs.cobalt_ref }}"; echo "run: ${{ github.run_id }}"; date -u; } > out-logs/meta.txt
-          git config user.name  "ci-bot"
-          git config user.email "ci-bot@users.noreply.github.com"
-          git add -A out-logs
-          git commit -m "ci: gn gen log [skip ci]" || echo "无变化"
-          git push || echo "!! push 失败：请到 Settings → Actions → General → Workflow permissions 选 Read and write"
