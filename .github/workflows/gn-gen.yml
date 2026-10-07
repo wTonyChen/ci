@@ -150,13 +150,14 @@ jobs:
           echo "--- index (nm -s) ---"; nm -s "$A" 2>&1 | head -3
           echo "--- llvm-ar present? ---"; ls "$WORK/src/third_party/llvm-build/Release+Asserts/bin" 2>/dev/null | grep -E '^(llvm-ar|llvm-ranlib|ar)$' | head -5
 
-      - name: Point the bare 'ar'/'ranlib' at Chromium's llvm-ar
+      - name: Point ar/ranlib at Chromium's llvm-ar
         run: |
           LLVM="$WORK/src/third_party/llvm-build/Release+Asserts/bin"
-          ls "$LLVM" | grep -E '^(llvm-ar|llvm-ranlib)$' || true
-          sudo ln -sf "$LLVM/llvm-ar" /usr/local/bin/ar
-          [ -x "$LLVM/llvm-ranlib" ] && sudo ln -sf "$LLVM/llvm-ranlib" /usr/local/bin/ranlib
-          ar --version | head -2
+          # The linux toolchain uses the bare name 'ar' (//build/toolchain/linux/BUILD.gn),
+          # and /usr/bin precedes /usr/local/bin here, so overwrite the system tools.
+          sudo ln -sf "$LLVM/llvm-ar" /usr/bin/ar
+          if [ -x "$LLVM/llvm-ranlib" ]; then sudo ln -sf "$LLVM/llvm-ranlib" /usr/bin/ranlib; fi
+          hash -r; which ar; ar --version | head -1
 
       - name: ninja loader_app / cobalt / base
         run: |
