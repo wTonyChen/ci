@@ -15,5 +15,9 @@
 import(
     "//starboard/nx/arm64/shared/platform_configuration/configuration.gni")
 
+# aarch64 LP64 ABI (same shape as devkitA64). Without this the copied
+# linux/x64x11 config would select the x64 SABI and SB_IS_ARCH_X64 would be set.
+sabi_path = "//starboard/sabi/arm64/sabi-v$sb_api_version.json"
+
 gl_type = "angle"
 sb_angle_enable_gl = true
