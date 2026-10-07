@@ -13,4 +13,10 @@ is_debug = false
 symbol_level = 0
 
 starboard_target_platform = "nx-arm64"
+
+# Bare-metal devkitA64/newlib target: no glibc sysroot, no custom libc.
+# Without use_sysroot=false, //build/config/sysroot.gni asserts for an aarch64
+# sysroot as soon as current_cpu=arm64 on a linux-ish target_os.
+use_sysroot = false
+use_custom_libc = false
 enable_vulkan = false
