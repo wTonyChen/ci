@@ -67,3 +67,8 @@ clang_use_chrome_plugins = false
 use_custom_libcxx = false
 use_custom_libcxx_for_host = true
 treat_warnings_as_errors = false
+
+# is_clang=false makes BUILDCONFIG derive host_toolchain = //build/toolchain/linux:x64
+# (a GCC host toolchain), and Chromium's bundled libc++ does not compile with GCC;
+# pin the host toolchain to the clang one explicitly (declare_args -> args.gn wins).
+host_toolchain = "//build/toolchain/linux:clang_x64"
