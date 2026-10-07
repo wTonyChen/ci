@@ -117,6 +117,37 @@ jobs:
               print('patched platform_path.gni -> nx-arm64')
           else:
               print('platform_path.gni already patched')
+
+          # newlib hides CLOCK_THREAD_CPUTIME_ID behind _POSIX_THREAD_CPUTIME
+          # (it has no per-thread CPU clock). The generic code already returns 0
+          # when clock_gettime fails, so do that directly on Switch.
+          r = 'starboard/common/time.cc'
+          u = open(r).read()
+          old = '''  int64_t CurrentMonotonicThreadTime() {
+    struct timespec ts;
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) != 0) {'''
+          new = '''  int64_t CurrentMonotonicThreadTime() {
+#if defined(__SWITCH__)
+    // Nintendo Switch: no per-thread CPU clock (the generic branch below already
+    // returns 0 when clock_gettime fails).
+    return 0;
+#else
+    struct timespec ts;
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) != 0) {'''
+          if '__SWITCH__' not in u and old in u:
+              u = u.replace(old, new, 1)
+              u = u.replace('''    return ToMicroseconds(ts);
+  }
+
+  int64_t CurrentPosixTime() {''', '''    return ToMicroseconds(ts);
+#endif
+  }
+
+  int64_t CurrentPosixTime() {''', 1)
+              open(r, 'w').write(u)
+              print('patched time.cc -> __SWITCH__ branch')
+          else:
+              print('time.cc already patched (or anchor missing)')
           PY
 
       - name: gn gen
