@@ -1,10 +1,20 @@
-# Nintendo Switch platform configuration -- no Linux imports.
+# Nintendo Switch platform configuration: self-contained (no //starboard/linux).
+#
+# base_configuration.gni is the declaration entry point for Starboard's global
+# variables (font packages, etc.); without it identifiers like
+# cobalt_font_package_override_named_sans_serif are undefined.
+import("//starboard/build/config/base_configuration.gni")
+
+nasm_exists = false
+sb_enable_benchmark = true
+sb_enable_opus_sse = false
+sb_widevine_platform = ""
+platform_tests_path = ""
+sb_enable_cast_codec_tests = false
+
 if (current_toolchain == default_toolchain &&
     build_with_separate_cobalt_toolchain) {
-  platform_tests_path = ""
   cobalt_font_package = "standard"
 } else {
-  sb_evergreen_compatible_use_libunwind = use_evergreen
   sabi_path = "//starboard/sabi/arm64/sabi-v18.json"
 }
-sb_enable_benchmark = true
