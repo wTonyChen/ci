@@ -27,3 +27,9 @@ enable_vulkan = false
 # host tools (the documented pattern from //build/config/c++/c++.gni).
 use_custom_libcxx = false
 use_custom_libcxx_for_host = true
+
+# Make the devkitA64 starboard toolchain the DEFAULT toolchain for the whole build.
+# Without this only the starboard targets use it and everything else (base, v8, ...)
+# is compiled with the host clang, which then pulls in the host's glibc headers.
+# Cobalt's //build/config/BUILDCONFIG.gn honours custom_toolchain for exactly this.
+custom_toolchain = "//starboard/nx/arm64/toolchain:starboard"
