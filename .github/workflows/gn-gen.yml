@@ -122,12 +122,20 @@ jobs:
           echo "[gn check]"; "$GN" check out/nx '//starboard/nx/arm64/*' 2>&1 | head -25
           set -e
 
-      - name: ninja (first real Switch compile)
+      - name: ninja (Starboard platform library + a real executable)
         run: |
           cd "$WORK/src"
+          GN=./buildtools/linux64/gn; [ -x "$GN" ] || GN=gn
+          build() {   # $1 = gn label; resolves the ninja output path via gn desc
+            local out
+            out=$("$GN" desc out/nx "$1" outputs 2>/dev/null | head -1)
+            echo "=== $1 -> ${out:-<none>} ==="
+            if [ -n "$out" ]; then
+              timeout 1200 ninja -C out/nx -j4 "$out" 2>&1 | tail -45
+              echo "=== ninja exit=${PIPESTATUS[0]} ==="
+            fi
+          }
           set +e
-          T=$(ninja -C out/nx -t targets all 2>/dev/null | grep -m1 'starboard_platform' | cut -d: -f1)
-          echo "ninja target: $T"
-          timeout 900 ninja -C out/nx -j4 "$T" 2>&1 | tail -60
-          echo "ninja exit=${PIPESTATUS[0]}"
+          build //starboard/nx/arm64:starboard_platform
+          build //starboard/examples/hello_world:starboard_hello_world_example
           set -e
