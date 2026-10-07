@@ -1,5 +1,10 @@
 # Nintendo Switch platform configs (self-contained; the toolchain-specific flags
 # come from the devkitA64 toolchain via GN_*_FLAGS).
+# initialize_variables.gni defines starboard_toolchain / cobalt_toolchain /
+# native_toolchain, which toolchain_variables.gni then reads; without importing it
+# first, "current_toolchain == starboard_toolchain" is false and //starboard:starboard
+# is never defined (Unresolved dependencies).
+import("//cobalt/build/configs/initialize_variables.gni")
 import("//starboard/build/config/toolchain_variables.gni")
 
 config("platform_configuration") {
