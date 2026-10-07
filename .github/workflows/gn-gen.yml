@@ -167,6 +167,12 @@ jobs:
           }
           # The clang_x64 host toolchain produces THIN archives (2 KB .a files) that
           # GNU ld rejects with "archive has no index"; build them first, ranlib them.
+          echo "=== exact AR command for libprotoc_lib.a ==="
+          rm -f out/nx/clang_x64/obj/third_party/protobuf/libprotoc_lib.a
+          ninja -C out/nx -v clang_x64/obj/third_party/protobuf/libprotoc_lib.a 2>&1 | tail -6 | cut -c1-260
+          echo "=== members of the freshly built archive ==="
+          ar t out/nx/clang_x64/obj/third_party/protobuf/libprotoc_lib.a 2>&1 | head -5
+          ls -la out/nx/clang_x64/obj/third_party/protobuf/libprotoc_lib.a 2>&1 | head -2
           for A in clang_x64/obj/third_party/protobuf/libprotoc_lib.a clang_x64/obj/third_party/protobuf/libprotobuf_lite.a; do
             ninja -C out/nx -j4 "$A" >/dev/null 2>&1
           done
