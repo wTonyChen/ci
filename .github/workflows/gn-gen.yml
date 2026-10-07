@@ -20,8 +20,11 @@ jobs:
       GN_CXX_COMPILER: /opt/devkitpro/devkitA64/bin/aarch64-none-elf-g++
       GN_AR_COMPILER: /opt/devkitpro/devkitA64/bin/aarch64-none-elf-ar
       GN_LD_COMPILER: /opt/devkitpro/devkitA64/bin/aarch64-none-elf-g++
-      GN_C_FLAGS: -D__SWITCH__ -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57
-      GN_CXX_FLAGS: -D__SWITCH__ -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57
+      # -D__linux__ keeps the compiler-side view consistent with the GN-level
+      # current_os="linux" choice: build/build_config.h otherwise falls through to
+      # "#error Please add support for your platform" (OS_LINUX/OS_POSIX undefined).
+      GN_C_FLAGS: -D__SWITCH__ -D__linux__ -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57
+      GN_CXX_FLAGS: -D__SWITCH__ -D__linux__ -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57
       GN_LD_FLAGS: -L/opt/devkitpro/libnx/lib
     steps:
       - uses: actions/checkout@v4
