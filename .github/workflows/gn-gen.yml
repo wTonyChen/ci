@@ -91,64 +91,10 @@ jobs:
           echo "--- copying port/tree into the Cobalt checkout ---"
           cp -rv "$GITHUB_WORKSPACE/port/tree/." "$WORK/src/" 2>&1 | tail -20 || true
 
-      - name: Register the nx platform
+      - name: Apply port patches to the Cobalt tree
         run: |
           cd "$WORK/src"
-          python3 - <<'PY'
-          p = 'starboard/build/platforms.py'
-          s = open(p).read()
-          if 'nx-arm64' not in s:
-              s = s.replace("    'stub': 'starboard/stub',",
-                            "    'nx-arm64': 'starboard/nx/arm64',\n    'stub': 'starboard/stub',")
-              open(p, 'w').write(s)
-              print('registered nx-arm64')
-          else:
-              print('nx-arm64 already registered')
-
-          # starboard_target_platform is declared in platform_path.gni, which is not
-          # imported while gn parses --args, so the argument is ignored and the build
-          # falls back to linux-x64x11. Patch the linux branch assignment instead.
-          q = 'starboard/build/platform_path.gni'
-          t = open(q).read()
-          old = 'starboard_target_platform = "linux-x64x11"'
-          if 'nx-arm64' not in t:
-              assert old in t, 'anchor not found in platform_path.gni'
-              open(q, 'w').write(t.replace(old, 'starboard_target_platform = "nx-arm64"   # Chromium-NX', 1))
-              print('patched platform_path.gni -> nx-arm64')
-          else:
-              print('platform_path.gni already patched')
-
-          # newlib hides CLOCK_THREAD_CPUTIME_ID behind _POSIX_THREAD_CPUTIME
-          # (it has no per-thread CPU clock). The generic code already returns 0
-          # when clock_gettime fails, so do that directly on Switch.
-          r = 'starboard/common/time.cc'
-          u = open(r).read()
-          old = '''  int64_t CurrentMonotonicThreadTime() {
-    struct timespec ts;
-    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) != 0) {'''
-          new = '''  int64_t CurrentMonotonicThreadTime() {
-#if defined(__SWITCH__)
-    // Nintendo Switch: no per-thread CPU clock (the generic branch below already
-    // returns 0 when clock_gettime fails).
-    return 0;
-#else
-    struct timespec ts;
-    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) != 0) {'''
-          if '__SWITCH__' not in u and old in u:
-              u = u.replace(old, new, 1)
-              u = u.replace('''    return ToMicroseconds(ts);
-  }
-
-  int64_t CurrentPosixTime() {''', '''    return ToMicroseconds(ts);
-#endif
-  }
-
-  int64_t CurrentPosixTime() {''', 1)
-              open(r, 'w').write(u)
-              print('patched time.cc -> __SWITCH__ branch')
-          else:
-              print('time.cc already patched (or anchor missing)')
-          PY
+          python3 "$GITHUB_WORKSPACE/port/patches/apply.py"
 
       - name: gn gen
         run: |
