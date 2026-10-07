@@ -131,7 +131,7 @@ jobs:
           # $1 = label pattern, $2 = regex the product path must match
           build() {
             local label out
-            for label in $("$GN" ls out/nx "$1" 2>/dev/null); do
+            for label in $("$GN" ls out/nx "$1" 2>/dev/null | grep '^//'); do
               out=$("$GN" desc out/nx "$label" outputs 2>/dev/null \
                     | tr ' ' '\n' | grep -E "$2" | head -1 \
                     | sed 's|^//out/nx/||; s|^//||')   # ninja wants build-dir relative
