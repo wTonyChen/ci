@@ -151,5 +151,21 @@ jobs:
 
           set +e
           build '//starboard/nx/arm64:*' '\.a$'
-          build '//starboard/nx/arm64:*' '[^.]$' 'nx_smoke'
+          set -e
+
+      - name: link probe (which libc/POSIX symbols is the platform missing?)
+        run: |
+          cd "$WORK/src"
+          LIB=starboard/obj/starboard/nx/arm64/libstarboard_platform.a
+          ls -la "$LIB" || exit 0
+          set +e
+          /opt/devkitpro/devkitA64/bin/aarch64-none-elf-g++ \
+            -o /tmp/nx_link_probe.elf \
+            -Wl,--whole-archive "$LIB" -Wl,--no-whole-archive \
+            -Wl,--start-group -L/opt/devkitpro/libnx/lib -lnx -lm -Wl,--end-group \
+            -Wl,--gc-sections 2>&1 | tee /tmp/link.log | head -60
+          echo "link exit=${PIPESTATUS[0]}"
+          echo "--- undefined symbols, grouped ---"
+          grep -oE "undefined reference to [^']*" /tmp/link.log 2>/dev/null \
+            | sed "s/undefined reference to //" | sort | uniq -c | sort -rn | head -60
           set -e
