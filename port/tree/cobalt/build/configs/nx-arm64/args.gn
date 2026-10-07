@@ -55,3 +55,15 @@ native_toolchain = "//starboard/nx/arm64/toolchain:native_target"
 # GCC treats multi-character constants (fourcc-style 'DMP1') as a warning, but the
 # default -Werror=multichar turns it into an error; this is a buildarg, so it has to
 # be set here (a toolchain_args entry is silently ignored).
+
+# These are BUILDARGS, and GN uses buildargs (not toolchain_args) for the DEFAULT
+# toolchain: with custom_toolchain pointing at our devkitA64 toolchain, the default
+# toolchain is ours, so the GCC identity must live here. The non-default
+# native_target toolchain overrides them back to clang in its own toolchain_args.
+is_clang = false
+use_lld = false
+use_thin_lto = false
+clang_use_chrome_plugins = false
+use_custom_libcxx = false
+use_custom_libcxx_for_host = true
+treat_warnings_as_errors = false
