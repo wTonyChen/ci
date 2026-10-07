@@ -26,10 +26,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch depot_tools
+      - name: Fetch depot_tools (cache first)
         run: |
-          git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git /opt/depot_tools
+          mkdir -p .cache
+          if [ -d .cache/depot_tools ]; then
+            cp -a .cache/depot_tools /opt/depot_tools
+          else
+            git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git /opt/depot_tools
+            cp -a /opt/depot_tools .cache/depot_tools
+          fi
           echo "/opt/depot_tools" >> "$GITHUB_PATH"
+
+      - name: Cache toolchains (depot_tools + devkitA64)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/depot_tools
+            .cache/devkitpro
+          key: tools-${{ runner.os }}-devkitA64-v1
 
       - name: Free disk space and install devkitA64 from the official image
         run: |
@@ -41,12 +55,20 @@ jobs:
 
           # devkitA64 without containerising the whole job (the container's writable
           # layer lives on the same small disk and we cannot free host space from it)
-          docker pull devkitpro/devkita64:latest
-          sudo mkdir -p /opt/devkitpro
-          # cp -a through a bind mount: docker cp rejects a symlink in the image
-          # that points outside the copied tree
-          docker run --rm -v /opt/devkitpro:/host-dkp devkitpro/devkita64:latest \
-            cp -a /opt/devkitpro/. /host-dkp/
+          mkdir -p .cache
+          if [ -x .cache/devkitpro/devkitA64/bin/aarch64-none-elf-gcc ]; then
+            echo "devkitA64: restoring from cache"
+            sudo cp -a .cache/devkitpro /opt/devkitpro
+          else
+            echo "devkitA64: pulling the official image"
+            docker pull devkitpro/devkita64:latest
+            sudo mkdir -p /opt/devkitpro
+            # cp -a through a bind mount: docker cp rejects a symlink in the image
+            # that points outside the copied tree
+            docker run --rm -v /opt/devkitpro:/host-dkp devkitpro/devkita64:latest \
+              cp -a /opt/devkitpro/. /host-dkp/
+            sudo cp -a /opt/devkitpro .cache/devkitpro
+          fi
           /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc --version | head -1
           echo "--- after devkitPro ---"; df -h / | tail -1
 
