@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write            # 把结果日志提交回仓库
     steps:
       - uses: actions/checkout@v4
 
@@ -24,8 +26,30 @@ jobs:
           cd probes && bash build-all.sh
 
       - name: Upload .nro
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: probes-nro
           path: probes/build/*/*.nro
-          if-no-files-found: error
+          if-no-files-found: warn
+
+      - name: Write result log
+        if: always()
+        run: |
+          mkdir -p out-logs
+          {
+            echo "run: ${{ github.run_id }}"
+            date -u
+            echo "--- 产物 ---"
+            ls -l probes/build/*/*.nro 2>/dev/null || echo "(没有产出 .nro)"
+          } > out-logs/probes.txt
+          cat out-logs/probes.txt
+
+      - name: Commit result back
+        if: always()
+        run: |
+          git config user.name  "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git add -A out-logs
+          git commit -m "ci: probes result [skip ci]" || echo "无变化"
+          git push || echo "!! push 失败：Settings → Actions → General → Workflow permissions 需选 Read and write"
