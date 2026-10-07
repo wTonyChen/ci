@@ -23,8 +23,11 @@ jobs:
       # -D__linux__ keeps the compiler-side view consistent with the GN-level
       # current_os="linux" choice: build/build_config.h otherwise falls through to
       # "#error Please add support for your platform" (OS_LINUX/OS_POSIX undefined).
-      GN_C_FLAGS: -D__SWITCH__ -D__linux__ -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57
-      GN_CXX_FLAGS: -D__SWITCH__ -D__linux__ -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57
+      # _GNU_SOURCE/_DEFAULT_SOURCE: Chromium compiles with -std=c++17 (strict ANSI),
+      # which hides newlib's POSIX declarations (CLOCK_THREAD_CPUTIME_ID, setpriority,
+      # PRIO_PROCESS, ...) behind feature-test macros.
+      GN_C_FLAGS: -D__SWITCH__ -D__linux__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57
+      GN_CXX_FLAGS: -D__SWITCH__ -D__linux__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -I/opt/devkitpro/libnx/include -march=armv8-a -mtune=cortex-a57
       GN_LD_FLAGS: -L/opt/devkitpro/libnx/lib
     steps:
       - uses: actions/checkout@v4
