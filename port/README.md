@@ -61,4 +61,4 @@ assumes "poll on a pipe/eventfd", so the fds must be created by us:
 | 2 | `epoll_*` (ONESHOT, ET emulation) | `probe_epoll` |
 | 3 | `socketpair` + `send`/`recv`/`shutdown` | `probe_socketpair` |
 | 4 | plain symbols (`pread`/`pwrite`/`getrandom`/`sysconf`/`getauxval`/`statx`/`pthread_getattr_np`) | `probe_posix2` |
-| 5 | Starboard platform files `starboard/nx/arm64/` (separate track) | — |
+| 5 | Starboard platform files `starboard/nx/arm64/` (separate track) | - |
