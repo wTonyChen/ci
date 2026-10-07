@@ -1,0 +1,5 @@
+probes/build/
+probes/*.nro
+probes/*.elf
+probes/**/*.o
+out-logs/

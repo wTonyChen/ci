@@ -1,0 +1,31 @@
+name: probes
+on:
+  push:
+    paths: ['probes/**', '.github/workflows/probes.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install devkitPro (switch-dev + mesa)
+        run: |
+          wget -q https://apt.devkitpro.org/install-devkitpro-pacman -O /tmp/dkp.sh
+          chmod +x /tmp/dkp.sh
+          sudo /tmp/dkp.sh
+          sudo dkp-pacman -Sy --noconfirm
+          sudo dkp-pacman -S --noconfirm --needed switch-dev switch-mesa
+
+      - name: Build all probes
+        run: |
+          export DEVKITPRO=/opt/devkitpro
+          cd probes && bash build-all.sh
+
+      - name: Upload .nro
+        uses: actions/upload-artifact@v4
+        with:
+          name: probes-nro
+          path: probes/build/*/*.nro
+          if-no-files-found: error
