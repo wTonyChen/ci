@@ -16,4 +16,13 @@
     default: __builtin_popcount((unsigned int)(x)) \
   )
 #endif
+#ifndef CLOCK_THREAD_CPUTIME_ID
+#define CLOCK_THREAD_CPUTIME_ID 3
+#endif
+#ifndef SA_RESTART
+#define SA_RESTART 0x10000000
+#endif
+#ifndef SA_RESETHAND
+#define SA_RESETHAND 0x80000000
+#endif
 #endif
