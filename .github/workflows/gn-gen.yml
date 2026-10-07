@@ -133,7 +133,8 @@ jobs:
             local label out
             for label in $("$GN" ls out/nx "$1" 2>/dev/null); do
               out=$("$GN" desc out/nx "$label" outputs 2>/dev/null \
-                    | tr ' ' '\n' | grep -E "$2" | head -1)
+                    | tr ' ' '\n' | grep -E "$2" | head -1 \
+                    | sed 's|^//out/nx/||; s|^//||')   # ninja wants build-dir relative
               if [ -n "$out" ]; then
                 echo "=== $label -> $out ==="
                 timeout 1800 ninja -C out/nx -j4 "$out" 2>&1 | tail -45
@@ -146,6 +147,6 @@ jobs:
           }
 
           set +e
-          build '//starboard/nx/arm64/*' '\.a$'
-          build '//starboard/examples/hello_world/*' '[^.]$'
+          build '//starboard/nx/arm64:*' '\.a$'
+          build '//starboard/examples/hello_world:*' '[^.]$'
           set -e
