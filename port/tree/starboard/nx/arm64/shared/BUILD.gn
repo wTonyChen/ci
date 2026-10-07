@@ -31,15 +31,6 @@ static_library("starboard_platform_sources") {
     "//starboard/nx/arm64/system_get_property_impl.cc",
     "//starboard/shared/libjpeg/jpeg_image_decoder.cc",
     "//starboard/shared/libjpeg/jpeg_image_decoder.h",
-    "//starboard/shared/starboard/link_receiver.cc",
-    "//starboard/shared/starboard/link_receiver.h",
-    "//starboard/shared/x11/application_x11.cc",
-    "//starboard/shared/x11/player_set_bounds.cc",
-    "//starboard/shared/x11/window_create.cc",
-    "//starboard/shared/x11/window_destroy.cc",
-    "//starboard/shared/x11/window_get_platform_handle.cc",
-    "//starboard/shared/x11/window_get_size.cc",
-    "//starboard/shared/x11/window_internal.cc",
   ]
 
   if (!sb_is_modular || sb_is_evergreen) {
