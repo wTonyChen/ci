@@ -1,4 +1,9 @@
-run: 37554779585
-Wed Oct  7 00:59:10 UTC 2026
+run: 37555297699
+Wed Oct  7 01:05:25 AM UTC 2026
+--- DEVKITPRO ---
+/opt/devkitpro
 --- 产物 ---
-(没有产出 .nro)
+-rw-r--r-- 1 root root 5812280 Oct  7 01:05 probes/build/gl/probe_gl.nro
+-rw-r--r-- 1 root root  225336 Oct  7 01:05 probes/build/ipv6/probe_ipv6.nro
+-rw-r--r-- 1 root root  213048 Oct  7 01:05 probes/build/mmap/probe_mmap.nro
+-rw-r--r-- 1 root root  233528 Oct  7 01:05 probes/build/posix/probe_posix.nro

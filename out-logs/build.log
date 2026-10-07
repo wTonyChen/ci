@@ -1,0 +1,40 @@
+
+==================== probe: ipv6 ====================
+main.c
+linking probe_ipv6.elf
+built ... probe_ipv6.nacp
+built ... probe_ipv6.nro
+[ OK ] build/ipv6/probe_ipv6.nro  (225336 bytes)
+
+==================== probe: posix ====================
+main.c
+linking probe_posix.elf
+built ... probe_posix.nacp
+built ... probe_posix.nro
+[ OK ] build/posix/probe_posix.nro  (233528 bytes)
+
+==================== probe: gl ====================
+main.c
+linking probe_gl.elf
+built ... probe_gl.nacp
+built ... probe_gl.nro
+[ OK ] build/gl/probe_gl.nro  (5812280 bytes)
+
+==================== probe: mmap ====================
+main.c
+mmap_shim.c
+linking probe_mmap.elf
+built ... probe_mmap.nro
+[ OK ] build/mmap/probe_mmap.nro  (213048 bytes)
+
+==================================================
+成功 4 / 失败 0
+
+产物位置（拷到 SD 卡 sd:/switch/ 下，从 hbmenu 启动，建议 application 模式）：
+build/gl/probe_gl.nro
+build/ipv6/probe_ipv6.nro
+build/mmap/probe_mmap.nro
+build/posix/probe_posix.nro
+
+编译报错请原样发我 —— 首次编译需要按实际头文件微调，这是预期内的。
+build-all.sh exit=0
