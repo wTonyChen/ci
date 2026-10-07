@@ -44,4 +44,9 @@ static_library("starboard_platform_sources") {
   }
 
   configs += [ "//starboard/build/config:starboard_implementation" ]
+  configs += [
+    "//starboard/build/config:starboard",
+    "//starboard/nx/arm64/platform_configuration",
+  ]
+
 }

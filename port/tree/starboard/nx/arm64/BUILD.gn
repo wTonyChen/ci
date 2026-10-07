@@ -16,6 +16,11 @@ static_library("starboard_platform") {
   check_includes = false
 
   sources = [ "//starboard/nx/arm64/run_starboard_main.cc" ]
+  configs += [
+    "//starboard/build/config:starboard",
+    "//starboard/nx/arm64/platform_configuration",
+  ]
+
 
   public_deps = [
     "//starboard/nx/arm64/shared:starboard_platform",
@@ -36,6 +41,10 @@ if (sb_is_modular && !sb_is_evergreen) {
 # Chromium-NX smoke application: exists to exercise the link stage (it pulls the
 # libc/POSIX surface Starboard needs). Not part of the shipped browser.
 executable("nx_smoke") {
+  configs += [
+    "//starboard/build/config:starboard",
+    "//starboard/nx/arm64/platform_configuration",
+  ]
   sources = [ "nx_smoke.cc" ]
   deps = [ ":starboard_platform_with_main" ]
 }
