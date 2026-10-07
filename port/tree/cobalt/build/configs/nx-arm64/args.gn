@@ -61,13 +61,16 @@ native_toolchain = "//starboard/nx/arm64/toolchain:native_target"
 # toolchain is ours, so the GCC identity must live here. The non-default
 # native_target toolchain overrides them back to clang in its own toolchain_args.
 is_clang = false
-use_lld = false
 use_thin_lto = false
 clang_use_chrome_plugins = false
 use_custom_libcxx = false
 use_custom_libcxx_for_host = true
 treat_warnings_as_errors = false
 
+# NOTE: use_lld is deliberately NOT disabled here: the host toolchain produces thin
+# archives with -S (no symbol table), which only lld can consume; GNU ld fails with
+# "archive has no index". Our devkitA64 toolchain uses its own linker regardless.
+#
 # is_clang=false makes BUILDCONFIG derive host_toolchain = //build/toolchain/linux:x64
 # (a GCC host toolchain), and Chromium's bundled libc++ does not compile with GCC;
 # pin the host toolchain to the clang one explicitly (declare_args -> args.gn wins).
