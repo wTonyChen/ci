@@ -20,3 +20,10 @@ starboard_target_platform = "nx-arm64"
 use_sysroot = false
 use_custom_libc = false
 enable_vulkan = false
+
+# Chromium's bundled libc++ assumes a glibc-style libc (it includes <features.h>),
+# which newlib does not have; without this the build fell back to the HOST's
+# /usr/include/features.h. Use devkitA64's libstdc++ instead, and keep libc++ for
+# host tools (the documented pattern from //build/config/c++/c++.gni).
+use_custom_libcxx = false
+use_custom_libcxx_for_host = true
