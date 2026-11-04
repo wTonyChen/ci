@@ -252,4 +252,20 @@ else:
     open(FSH, "w").write(patched)
     print(f"  [ok]   {FSH} (whole body skipped on Switch)")
 
+# 13) newlib's siginfo_t only has si_signo/si_code/si_value: no si_pid/si_uid/
+#     si_addr/... Cobalt's modular signal wrapper reads the full Linux layout.
+#     Signals are not used on Switch, so translate just the two common fields.
+patch_function_body(
+    "starboard/shared/modular/starboard_layer_posix_signal_abi_wrappers.cc",
+    ("void PlatformToMuslSiginfo(const siginfo_t* platform_si,\n"
+     "                           musl_siginfo_t* musl_si) {"),
+    ("  if (!platform_si || !musl_si) {\n"
+     "    return;\n"
+     "  }\n"
+     "  // newlib's siginfo_t has only si_signo/si_code/si_value; keep those.\n"
+     "  memset(musl_si, 0, sizeof(*musl_si));\n"
+     "  musl_si->musl_si_signo = platform_si->si_signo;\n"
+     "  musl_si->musl_si_code = platform_si->si_code;\n"),
+    "#if defined(__SWITCH__)\n  // newlib's siginfo_t has only")
+
 print("all port patches applied")
