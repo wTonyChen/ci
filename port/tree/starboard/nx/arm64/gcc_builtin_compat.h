@@ -142,4 +142,56 @@ int setpriority(int which, int who, int prio);
 #ifdef __cplusplus
 }
 #endif
+// Linux resource limits (newlib has none) and POSIX scheduling extensions that
+// newlib omits. Cobalt's modular ABI wrappers reference the whole family, so
+// define it in one go rather than one error at a time.
+#ifndef RLIMIT_CPU
+#define RLIMIT_CPU 0
+#define RLIMIT_FSIZE 1
+#define RLIMIT_DATA 2
+#define RLIMIT_STACK 3
+#define RLIMIT_CORE 4
+#define RLIMIT_RSS 5
+#define RLIMIT_NPROC 6
+#define RLIMIT_NOFILE 7
+#define RLIMIT_MEMLOCK 8
+#define RLIMIT_AS 9
+#define RLIMIT_LOCKS 10
+#define RLIMIT_SIGPENDING 11
+#define RLIMIT_MSGQUEUE 12
+#define RLIMIT_NICE 13
+#define RLIMIT_RTPRIO 14
+#endif
+
+#ifndef SCHED_BATCH
+#define SCHED_BATCH 3
+#endif
+#ifndef SCHED_IDLE
+#define SCHED_IDLE 5
+#endif
+#ifndef NX_CPU_SETSIZE
+#define NX_CPU_SETSIZE 64
+#endif
+#ifndef CPU_ZERO
+typedef struct {
+  unsigned long __bits[(NX_CPU_SETSIZE + 63) / 64];
+} cpu_set_t;
+#define CPU_ZERO(set)   do { for (int i = 0; i < (NX_CPU_SETSIZE + 63) / 64; ++i) (set)->__bits[i] = 0; } while (0)
+#define CPU_SET(cpu, set) ((set)->__bits[(cpu) / 64] |= (1UL << ((cpu) % 64)))
+#define CPU_CLR(cpu, set) ((set)->__bits[(cpu) / 64] &= ~(1UL << ((cpu) % 64)))
+#define CPU_ISSET(cpu, set) (((set)->__bits[(cpu) / 64] >> ((cpu) % 64)) & 1UL)
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+int sched_setscheduler(pid_t pid, int policy, const struct sched_param* param);
+int sched_getscheduler(pid_t pid);
+int sched_setparam(pid_t pid, const struct sched_param* param);
+int sched_getparam(pid_t pid, struct sched_param* param);
+int sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t* mask);
+int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t* mask);
+#ifdef __cplusplus
+}
+#endif
 #endif

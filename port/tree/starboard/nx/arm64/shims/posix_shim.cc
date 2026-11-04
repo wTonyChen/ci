@@ -268,4 +268,49 @@ int setpriority(int which, int who, int prio) {
   return -1;
 }
 
+// Switch has one scheduler policy and no CPU affinity control; be explicit.
+int sched_setscheduler(pid_t pid, int policy, const struct sched_param* param) {
+  (void)pid;
+  (void)policy;
+  (void)param;
+  errno = ENOSYS;
+  return -1;
+}
+
+int sched_getscheduler(pid_t pid) {
+  (void)pid;
+  errno = ENOSYS;
+  return -1;
+}
+
+int sched_setparam(pid_t pid, const struct sched_param* param) {
+  (void)pid;
+  (void)param;
+  errno = ENOSYS;
+  return -1;
+}
+
+int sched_getparam(pid_t pid, struct sched_param* param) {
+  (void)pid;
+  (void)param;
+  errno = ENOSYS;
+  return -1;
+}
+
+int sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t* mask) {
+  (void)pid;
+  (void)cpusetsize;
+  (void)mask;
+  errno = ENOSYS;
+  return -1;
+}
+
+int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t* mask) {
+  (void)pid;
+  (void)cpusetsize;
+  (void)mask;
+  errno = ENOSYS;
+  return -1;
+}
+
 }  // extern "C"
