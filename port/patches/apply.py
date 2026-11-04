@@ -122,4 +122,20 @@ patch(SUB,
       "#endif\n",
       "usg.ru_nivcsw);\n#endif")
 
+# 7) partition_alloc enables aarch64 MTE with clang-only flags
+#    (-Xclang -target-feature -Xclang +mte) when it sees linux+arm64, without
+#    checking is_clang. We are gcc, so gate both places on is_clang.
+PA_BUILD = ("base/allocator/partition_allocator/src/partition_alloc/"
+            "BUILD.gn")
+patch(PA_BUILD,
+      'if (current_cpu == "arm64" &&\n'
+      '        (is_linux || is_chromeos || is_android || is_fuchsia)) {',
+      'if (is_clang && current_cpu == "arm64" &&\n'
+      '        (is_linux || is_chromeos || is_android || is_fuchsia)) {',
+      "is_clang && current_cpu")
+patch(PA_BUILD,
+      'if ((is_android || is_linux) && target_cpu == "arm64") {',
+      'if (is_clang && (is_android || is_linux) && target_cpu == "arm64") {',
+      "is_clang && (is_android")
+
 print("all port patches applied")
