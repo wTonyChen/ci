@@ -200,4 +200,24 @@ for _line in ("musl_entry->d_off = entry.d_off;",
               "dirp->musl_dir_entry->d_reclen = result_platform->d_reclen;"):
     guard_line(DIRWRAP, _line)
 
+# 11) Cobalt's modular fcntl ABI wrappers assume the musl (Linux) O_*/F_* values
+#     and static_assert them. newlib's values differ (O_CREAT is 0x200, not
+#     0100, ...), so the asserts cannot hold on Switch. They are documentation
+#     only; skip them here and note that the modular ABI layer deserves a
+#     revisit once the build links (see RESUME.md "modular ABI" note).
+FCNTL_H = ("starboard/shared/modular/"
+           "starboard_layer_posix_fcntl_abi_wrappers.h")
+if "__SWITCH__" in open(FCNTL_H).read():
+    print(f"  [skip] {FCNTL_H} already patched")
+else:
+    src = open(FCNTL_H).read()
+    src, n1 = re.subn(r"(?m)^static_assert\(O_CREAT ==",
+                      "#if !defined(__SWITCH__)\nstatic_assert(O_CREAT ==", src, count=1)
+    src, n2 = re.subn(r"(?m)^#ifdef __cplusplus\nextern \"C\" \{",
+                      "#endif  // !__SWITCH__\n#ifdef __cplusplus\nextern \"C\" {",
+                      src, count=1)
+    assert n1 == 1 and n2 == 1, "fcntl wrapper header anchors not found"
+    open(FCNTL_H, "w").write(src)
+    print(f"  [ok]   {FCNTL_H} (static_asserts skipped on Switch)")
+
 print("all port patches applied")

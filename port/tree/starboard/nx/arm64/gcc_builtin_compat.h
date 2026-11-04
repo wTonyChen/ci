@@ -58,4 +58,18 @@ int* __errno_location(void);
 #ifndef ElfW
 #define ElfW(type) Elf64_##type
 #endif
+// Cobalt's modular fcntl wrappers reference Linux-only open/fcntl constants
+// that newlib does not define. Values are musl's (aarch64).
+#ifndef O_PATH
+#define O_PATH 010000000
+#endif
+#ifndef O_TMPFILE
+#define O_TMPFILE 020200000
+#endif
+#ifndef F_GETOWN_EX
+#define F_GETOWN_EX 16
+#endif
+#ifndef F_SETOWN_EX
+#define F_SETOWN_EX 15
+#endif
 #endif
