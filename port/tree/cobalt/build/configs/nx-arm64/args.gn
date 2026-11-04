@@ -75,3 +75,9 @@ treat_warnings_as_errors = false
 # (a GCC host toolchain), and Chromium's bundled libc++ does not compile with GCC;
 # pin the host toolchain to the clang one explicitly (declare_args -> args.gn wins).
 host_toolchain = "//build/toolchain/linux:clang_x64"
+
+# Chromium enables PAC/BTI for linux+arm64, which adds -mbranch-protection=...
+# to every target. That flag also reaches the Rust bindgen step, whose clang
+# runs with the default x86_64 target and rejects it; Switch has no PAC/BTI
+# either, so turn branch protection off at the source.
+arm_control_flow_integrity = "none"

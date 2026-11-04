@@ -17,6 +17,24 @@
 #ifndef SYS_getrandom
 #define SYS_getrandom 278
 #endif
+#ifndef SYS_read
+#define SYS_read 63
+#endif
+#ifndef SYS_write
+#define SYS_write 64
+#endif
+#ifndef SYS_close
+#define SYS_close 57
+#endif
+#ifndef SYS_exit
+#define SYS_exit 93
+#endif
+#ifndef SYS_munmap
+#define SYS_munmap 215
+#endif
+#ifndef SYS_mmap
+#define SYS_mmap 222
+#endif
 #ifndef SYS_futex
 #define SYS_futex 98
 #endif
@@ -29,6 +47,24 @@
 #endif
 #ifndef __NR_getrandom
 #define __NR_getrandom 278
+#endif
+#ifndef __NR_read
+#define __NR_read 63
+#endif
+#ifndef __NR_write
+#define __NR_write 64
+#endif
+#ifndef __NR_close
+#define __NR_close 57
+#endif
+#ifndef __NR_exit
+#define __NR_exit 93
+#endif
+#ifndef __NR_munmap
+#define __NR_munmap 215
+#endif
+#ifndef __NR_mmap
+#define __NR_mmap 222
 #endif
 #ifndef __NR_futex
 #define __NR_futex 98
