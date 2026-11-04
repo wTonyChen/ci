@@ -54,4 +54,39 @@ patch("starboard/common/thread_platform_base.cc",
       'bool SetCurrentThreadPriority(ThreadPriority priority) {\n#if defined(__SWITCH__)\n  // libnx thread priorities: lower value = higher priority, 0x2C is the default\n  // for user threads and the useful range is about 0x20..0x3F. Starboard hands us\n  // a POSIX nice value (lower = higher priority), so map it onto that range.\n  int sw_priority = 0x2C + ThreadPriorityToNiceValue(priority) / 5;\n  if (sw_priority < 0x20) sw_priority = 0x20;\n  if (sw_priority > 0x3F) sw_priority = 0x3F;\n  return R_SUCCEEDED(\n      svcSetThreadPriority(threadGetCurHandle(), (u32)sw_priority));\n#else\n  // setpriority returns 0 on success and -1 on failure. The default nice value\n  // is 0. See https://linux.die.net/man/2/setpriority\n  return setpriority(PRIO_PROCESS, /*who=*/0,\n                     ThreadPriorityToNiceValue(priority)) == 0;\n#endif\n}\n\n',
       "svcSetThreadPriority")
 
+# 5) newlib's <string.h> declares strerror_r with the GNU signature (returns
+#    char*) whenever _GNU_SOURCE is set -- and this port sets it. Chromium and
+#    partition_alloc instead select the POSIX overload through &strerror_r,
+#    which then fails to compile. Call the GNU flavour directly on Switch.
+STRERROR_CALL = re.compile(
+    r'(?m)^(?P<indent>[ \t]*)wrap_posix_strerror_r\(&strerror_r, err, buf, len\);')
+
+STRERROR_NEW = r'''%(i)s#if defined(__SWITCH__)
+%(i)s  // newlib's strerror_r is the GNU flavour (returns char*), so call it
+%(i)s  // directly instead of resolving the POSIX overload through a pointer.
+%(i)s  char* rc = strerror_r(err, buf, len);
+%(i)s  if (rc != buf) {
+%(i)s    buf[0] = '\0';
+%(i)s    strncat(buf, rc, len - 1);
+%(i)s  }
+%(i)s#else
+%(i)swrap_posix_strerror_r(&strerror_r, err, buf, len);
+%(i)s#endif'''
+
+def patch_strerror(path):
+    s = open(path).read()
+    if "__SWITCH__" in s:
+        print(f"  [skip] {path} already patched")
+        return
+    m = STRERROR_CALL.search(s)
+    assert m, f"strerror anchor not found in {path}"
+    new = STRERROR_NEW % {"i": m.group("indent")}
+    s = s[:m.start()] + new + s[m.end():]
+    open(path, "w").write(s)
+    print(f"  [ok]   {path}")
+
+patch_strerror("base/allocator/partition_allocator/src/partition_alloc/"
+               "partition_alloc_base/posix/safe_strerror.cc")
+patch_strerror("base/posix/safe_strerror.cc")
+
 print("all port patches applied")

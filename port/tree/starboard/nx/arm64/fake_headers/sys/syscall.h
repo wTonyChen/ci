@@ -6,11 +6,26 @@
 #define FAKE_SYS_SYSCALL_H_
 
 // asm-generic unistd.h numbers; the aarch64 table is the generic one.
+// perfetto (thread_utils.h) uses __NR_gettid, partition_alloc uses
+// __NR_getrandom, so both spellings are provided.
 #ifndef SYS_getpid
 #define SYS_getpid 172
 #endif
 #ifndef SYS_gettid
 #define SYS_gettid 178
+#endif
+#ifndef SYS_getrandom
+#define SYS_getrandom 278
+#endif
+
+#ifndef __NR_getpid
+#define __NR_getpid 172
+#endif
+#ifndef __NR_gettid
+#define __NR_gettid 178
+#endif
+#ifndef __NR_getrandom
+#define __NR_getrandom 278
 #endif
 
 #ifdef __cplusplus
