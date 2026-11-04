@@ -17,6 +17,12 @@
 #ifndef SYS_getrandom
 #define SYS_getrandom 278
 #endif
+#ifndef SYS_rt_sigprocmask
+#define SYS_rt_sigprocmask 135
+#endif
+#ifndef __NR_rt_sigprocmask
+#define __NR_rt_sigprocmask 135
+#endif
 #ifndef SYS_read
 #define SYS_read 63
 #endif

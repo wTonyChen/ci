@@ -175,4 +175,29 @@ else:
     open(PAGE_ALLOC, "w").write(src)
     print(f"  [ok]   {PAGE_ALLOC}")
 
+def guard_line(path, line_text):
+    """Wrap one exact source line in "#if !defined(__SWITCH__)" (indent-preserving)."""
+    src = open(path).read()
+    if re.search(r"(?m)^[ \t]*#if !defined\(__SWITCH__\)[ \t]*\n[ \t]*"
+                 + re.escape(line_text), src):
+        print(f"  [skip] {path} already patched ({line_text.strip()})")
+        return
+    pat = re.compile(r"(?m)^([ \t]*)" + re.escape(line_text) + r"[ \t]*$")
+    m = pat.search(src)
+    assert m, f"line not found in {path}: {line_text}"
+    ind = m.group(1)
+    rep = f"{ind}#if !defined(__SWITCH__)\n{ind}{line_text}\n{ind}#endif"
+    open(path, "w").write(src[:m.start()] + rep + src[m.end():])
+    print(f"  [ok]   {path} ({line_text.strip()})")
+
+# 10) newlib's struct dirent has no d_off/d_reclen (Cobalt's modular ABI wrappers
+#     assume the Linux layout). Fill nothing for those two fields on Switch.
+DIRWRAP = ("starboard/shared/modular/"
+           "starboard_layer_posix_directory_abi_wrappers.cc")
+for _line in ("musl_entry->d_off = entry.d_off;",
+              "musl_entry->d_reclen = entry.d_reclen;",
+              "dirp->musl_dir_entry->d_off = result_platform->d_off;",
+              "dirp->musl_dir_entry->d_reclen = result_platform->d_reclen;"):
+    guard_line(DIRWRAP, _line)
+
 print("all port patches applied")

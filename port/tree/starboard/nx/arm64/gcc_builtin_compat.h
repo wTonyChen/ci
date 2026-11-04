@@ -37,6 +37,17 @@ time_t timegm(struct tm* tm);
 }
 #endif
 
+// Cobalt's modular ABI wrapper calls glibc's __errno_location(); newlib exposes
+// the same thing as __errno(). Declared here (force-included) and defined in
+// shims/posix_shim.cc.
+#ifdef __cplusplus
+extern "C" {
+#endif
+int* __errno_location(void);
+#ifdef __cplusplus
+}
+#endif
+
 // partition_alloc's stack_trace_posix.cc gets ElfW()/ELFMAG/SELFMAG from
 // glibc's <link.h>/<elf.h>. newlib has <elf.h> but neither ElfW nor SELFMAG,
 // and no <link.h> at all. Fill the gaps here (aarch64 is LP64 -> Elf64_*).

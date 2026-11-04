@@ -138,4 +138,9 @@ int dladdr(const void* addr, void* info) {
   return 0;
 }
 
+// glibc spelling of newlib's __errno(); Cobalt's modular ABI wrappers call it.
+int* __errno_location(void) {
+  return &errno;
+}
+
 }  // extern "C"
