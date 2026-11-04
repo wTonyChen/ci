@@ -81,4 +81,30 @@ int* __errno_location(void);
 #ifndef F_SETOWN_EX
 #define F_SETOWN_EX 0x7E02
 #endif
+// newlib's pthread is a stub: no scopes / scheduling policy / getattr_np.
+// Cobalt's modular pthread ABI wrappers call these glibc/POSIX extensions, so
+// declare them here and let shims/posix_shim.cc answer ENOSYS.
+#include <pthread.h>
+#include <sched.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+int pthread_getattr_np(pthread_t thread, pthread_attr_t* attr);
+int pthread_attr_getscope(const pthread_attr_t* attr, int* scope);
+int pthread_attr_setscope(pthread_attr_t* attr, int scope);
+int pthread_attr_getschedpolicy(const pthread_attr_t* attr, int* policy);
+int pthread_attr_setschedpolicy(pthread_attr_t* attr, int policy);
+int pthread_getschedparam(pthread_t thread, int* policy,
+                          struct sched_param* param);
+int pthread_setschedparam(pthread_t thread, int policy,
+                          const struct sched_param* param);
+#ifdef __cplusplus
+}
+#endif
+#ifndef PTHREAD_PROCESS_PRIVATE
+#define PTHREAD_PROCESS_PRIVATE 0
+#endif
+#ifndef PTHREAD_PROCESS_SHARED
+#define PTHREAD_PROCESS_SHARED 1
+#endif
 #endif

@@ -12,6 +12,8 @@
 #include <sys/prctl.h>
 #include <sys/random.h>
 #include <sys/inotify.h>
+#include <pthread.h>
+#include <sched.h>
 #include <stdarg.h>
 
 extern "C" {
@@ -180,6 +182,60 @@ int inotify_rm_watch(int fd, int wd) {
   (void)wd;
   errno = ENOSYS;
   return -1;
+}
+
+// newlib's pthread has no scopes / scheduling policy / getattr_np. These are
+// called by Cobalt's modular ABI wrappers; report "not supported" honestly.
+int pthread_getattr_np(pthread_t thread, pthread_attr_t* attr) {
+  (void)thread;
+  (void)attr;
+  return ENOSYS;
+}
+
+int pthread_attr_getscope(const pthread_attr_t* attr, int* scope) {
+  (void)attr;
+  if (scope) {
+    *scope = 0;
+  }
+  return ENOSYS;
+}
+
+int pthread_attr_setscope(pthread_attr_t* attr, int scope) {
+  (void)attr;
+  (void)scope;
+  return ENOSYS;
+}
+
+int pthread_attr_getschedpolicy(const pthread_attr_t* attr, int* policy) {
+  (void)attr;
+  if (policy) {
+    *policy = 0;
+  }
+  return ENOSYS;
+}
+
+int pthread_attr_setschedpolicy(pthread_attr_t* attr, int policy) {
+  (void)attr;
+  (void)policy;
+  return ENOSYS;
+}
+
+int pthread_getschedparam(pthread_t thread, int* policy,
+                          struct sched_param* param) {
+  (void)thread;
+  (void)param;
+  if (policy) {
+    *policy = 0;
+  }
+  return ENOSYS;
+}
+
+int pthread_setschedparam(pthread_t thread, int policy,
+                          const struct sched_param* param) {
+  (void)thread;
+  (void)policy;
+  (void)param;
+  return ENOSYS;
 }
 
 }  // extern "C"
