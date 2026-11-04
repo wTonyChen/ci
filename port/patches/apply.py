@@ -138,4 +138,22 @@ patch(PA_BUILD,
       'if (is_clang && (is_android || is_linux) && target_cpu == "arm64") {',
       "is_clang && (is_android")
 
+# 8) partition_alloc/stack/stack.cc uses pthread_getattr_np(), which newlib does
+#    not provide. On Switch the stack is a single contiguous region, so the
+#    current frame address is a good enough upper bound for stack scanning.
+patch("base/allocator/partition_allocator/src/partition_alloc/stack/stack.cc",
+      "#elif PA_BUILDFLAG(IS_POSIX) || PA_BUILDFLAG(IS_FUCHSIA)\n\n"
+      "void* GetStackTop() {\n"
+      "  pthread_attr_t attr;\n",
+      "#elif defined(__SWITCH__)\n\n"
+      "void* GetStackTop() {\n"
+      "  // newlib has no pthread_getattr_np(); the Switch stack is contiguous,\n"
+      "  // so the current frame address is a good enough upper bound.\n"
+      "  return __builtin_frame_address(0);\n"
+      "}\n\n"
+      "#elif PA_BUILDFLAG(IS_POSIX) || PA_BUILDFLAG(IS_FUCHSIA)\n\n"
+      "void* GetStackTop() {\n"
+      "  pthread_attr_t attr;\n",
+      "#elif defined(__SWITCH__)\n\nvoid* GetStackTop()")
+
 print("all port patches applied")

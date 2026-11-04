@@ -17,6 +17,9 @@
 #ifndef SYS_getrandom
 #define SYS_getrandom 278
 #endif
+#ifndef SYS_futex
+#define SYS_futex 98
+#endif
 
 #ifndef __NR_getpid
 #define __NR_getpid 172
@@ -26,6 +29,9 @@
 #endif
 #ifndef __NR_getrandom
 #define __NR_getrandom 278
+#endif
+#ifndef __NR_futex
+#define __NR_futex 98
 #endif
 
 #ifdef __cplusplus
