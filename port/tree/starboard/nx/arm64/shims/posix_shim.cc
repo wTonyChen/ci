@@ -12,6 +12,7 @@
 #include <sys/prctl.h>
 #include <sys/random.h>
 #include <sys/inotify.h>
+#include <ifaddrs.h>
 #include <pthread.h>
 #include <sched.h>
 #include <stdarg.h>
@@ -311,6 +312,19 @@ int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t* mask) {
   (void)mask;
   errno = ENOSYS;
   return -1;
+}
+
+// Horizon has no getifaddrs(); Cobalt's socket wrapper degrades gracefully.
+int getifaddrs(struct ifaddrs** ifap) {
+  if (ifap) {
+    *ifap = nullptr;
+  }
+  errno = ENOSYS;
+  return -1;
+}
+
+void freeifaddrs(struct ifaddrs* ifa) {
+  (void)ifa;
 }
 
 }  // extern "C"
