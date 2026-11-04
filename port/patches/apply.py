@@ -220,4 +220,27 @@ else:
     open(FCNTL_H, "w").write(src)
     print(f"  [ok]   {FCNTL_H} (static_asserts skipped on Switch)")
 
+# 12) abseil's failure_signal_handler installs a SA_SIGINFO handler and stores
+#     it in action.sa_sigaction. newlib's struct sigaction has no sa_sigaction
+#     member (that variant only exists on RTEMS builds), so make the installer a
+#     no-op on Switch: Horizon homebrew has no useful POSIX crash signal path.
+FSH = ("third_party/abseil-cpp/absl/debugging/failure_signal_handler.cc")
+if "__SWITCH__" in open(FSH).read():
+    print(f"  [skip] {FSH} already patched")
+else:
+    src = open(FSH).read()
+    old = ("void InstallFailureSignalHandler(const FailureSignalHandlerOptions& "
+           "options) {\n")
+    new = ("void InstallFailureSignalHandler(const FailureSignalHandlerOptions& "
+           "options) {\n"
+           "#if defined(__SWITCH__)\n"
+           "  // newlib's struct sigaction has no sa_sigaction; no crash-signal "
+           "handling here.\n"
+           "  (void)options;\n"
+           "  return;\n"
+           "#endif\n")
+    assert old in src, "failure_signal_handler anchor not found"
+    open(FSH, "w").write(src.replace(old, new, 1))
+    print(f"  [ok]   {FSH}")
+
 print("all port patches applied")

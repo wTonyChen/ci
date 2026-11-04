@@ -11,6 +11,7 @@
 #include <sys/timerfd.h>
 #include <sys/prctl.h>
 #include <sys/random.h>
+#include <sys/inotify.h>
 #include <stdarg.h>
 
 extern "C" {
@@ -152,6 +153,33 @@ ssize_t getrandom(void* buf, size_t buflen, unsigned int flags) {
   }
   randomGet(buf, buflen);
   return static_cast<ssize_t>(buflen);
+}
+
+// Horizon has no inotify; report "not supported" rather than pretending.
+int inotify_init(void) {
+  errno = ENOSYS;
+  return -1;
+}
+
+int inotify_init1(int flags) {
+  (void)flags;
+  errno = ENOSYS;
+  return -1;
+}
+
+int inotify_add_watch(int fd, const char* pathname, uint32_t mask) {
+  (void)fd;
+  (void)pathname;
+  (void)mask;
+  errno = ENOSYS;
+  return -1;
+}
+
+int inotify_rm_watch(int fd, int wd) {
+  (void)fd;
+  (void)wd;
+  errno = ENOSYS;
+  return -1;
 }
 
 }  // extern "C"
