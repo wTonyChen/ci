@@ -107,4 +107,39 @@ int pthread_setschedparam(pthread_t thread, int policy,
 #ifndef PTHREAD_PROCESS_SHARED
 #define PTHREAD_PROCESS_SHARED 1
 #endif
+// newlib's <sys/resource.h> only has rusage/getrusage: no rlimit, no
+// PRIO_*/getpriority/setpriority. Cobalt's modular resource ABI wrapper needs
+// them; the shim answers ENOSYS.
+#ifndef NX_RLIMIT_DEFINED
+#define NX_RLIMIT_DEFINED
+typedef unsigned long nx_rlim_t;
+struct rlimit {
+  nx_rlim_t rlim_cur;
+  nx_rlim_t rlim_max;
+};
+#endif
+#ifndef RLIM_INFINITY
+#define RLIM_INFINITY (~(unsigned long)0)
+#endif
+#ifndef RLIM_SAVED_CUR
+#define RLIM_SAVED_CUR RLIM_INFINITY
+#endif
+#ifndef RLIM_SAVED_MAX
+#define RLIM_SAVED_MAX RLIM_INFINITY
+#endif
+#ifndef PRIO_PROCESS
+#define PRIO_PROCESS 0
+#define PRIO_PGRP 1
+#define PRIO_USER 2
+#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
+int getrlimit(int resource, struct rlimit* rlim);
+int setrlimit(int resource, const struct rlimit* rlim);
+int getpriority(int which, int who);
+int setpriority(int which, int who, int prio);
+#ifdef __cplusplus
+}
+#endif
 #endif

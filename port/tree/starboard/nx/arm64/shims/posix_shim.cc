@@ -238,4 +238,34 @@ int pthread_setschedparam(pthread_t thread, int policy,
   return ENOSYS;
 }
 
+// Horizon exposes no rlimits or process priorities; report "not supported".
+int getrlimit(int resource, struct rlimit* rlim) {
+  (void)resource;
+  (void)rlim;
+  errno = ENOSYS;
+  return -1;
+}
+
+int setrlimit(int resource, const struct rlimit* rlim) {
+  (void)resource;
+  (void)rlim;
+  errno = ENOSYS;
+  return -1;
+}
+
+int getpriority(int which, int who) {
+  (void)which;
+  (void)who;
+  errno = ENOSYS;
+  return -1;
+}
+
+int setpriority(int which, int who, int prio) {
+  (void)which;
+  (void)who;
+  (void)prio;
+  errno = ENOSYS;
+  return -1;
+}
+
 }  // extern "C"
