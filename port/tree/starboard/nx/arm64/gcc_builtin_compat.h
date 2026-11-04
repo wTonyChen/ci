@@ -67,9 +67,9 @@ int* __errno_location(void);
 #define O_TMPFILE 020200000
 #endif
 #ifndef F_GETOWN_EX
-#define F_GETOWN_EX 16
+#define F_GETOWN_EX 0x7E01  /* newlib reuses 15/16 for F_OFD_* */
 #endif
 #ifndef F_SETOWN_EX
-#define F_SETOWN_EX 15
+#define F_SETOWN_EX 0x7E02
 #endif
 #endif

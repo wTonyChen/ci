@@ -10,6 +10,7 @@
 #include <sys/syscall.h>
 #include <sys/timerfd.h>
 #include <sys/prctl.h>
+#include <sys/random.h>
 #include <stdarg.h>
 
 extern "C" {
@@ -141,6 +142,16 @@ int dladdr(const void* addr, void* info) {
 // glibc spelling of newlib's __errno(); Cobalt's modular ABI wrappers call it.
 int* __errno_location(void) {
   return &errno;
+}
+
+// glibc-style getrandom() on top of libnx's CSRNG.
+ssize_t getrandom(void* buf, size_t buflen, unsigned int flags) {
+  (void)flags;
+  if (buflen == 0) {
+    return 0;
+  }
+  randomGet(buf, buflen);
+  return static_cast<ssize_t>(buflen);
 }
 
 }  // extern "C"
