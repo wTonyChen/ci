@@ -304,4 +304,24 @@ patch_function_body(
     "                                     void (*handler)(int, siginfo_t*, void*)) {\n"
     "#if defined(__SWITCH__)")
 
+# 15) absl's cctz reads the glibc/BSD struct tm extensions tm_gmtoff/tm_zone,
+#     which newlib's struct tm does not have. Switch has no local timezone
+#     database anyway; answer UTC.
+CCTZ = "third_party/abseil-cpp/absl/time/internal/cctz/src/time_zone_libc.cc"
+patch(CCTZ,
+      "// Adapt to different spellings of the struct std::tm extension fields.\n"
+      "#if defined(tm_gmtoff)",
+      "// Adapt to different spellings of the struct std::tm extension fields.\n"
+      "#if defined(__SWITCH__)\n"
+      "inline long tm_gmtoff(const std::tm&) { return 0; }\n"
+      "#elif defined(tm_gmtoff)",
+      "inline long tm_gmtoff(const std::tm&)")
+patch(CCTZ,
+      "#endif  // tm_gmtoff\n#if defined(tm_zone)",
+      "#endif  // tm_gmtoff\n"
+      "#if defined(__SWITCH__)\n"
+      "inline const char* tm_zone(const std::tm&) { return \"UTC\"; }\n"
+      "#elif defined(tm_zone)",
+      "inline const char* tm_zone(const std::tm&)")
+
 print("all port patches applied")
