@@ -27,6 +27,7 @@ group("starboard_platform") {
 static_library("starboard_platform_sources") {
   check_includes = false
   sources = [
+    "//starboard/nx/arm64/shims/posix_shim.cc",
     "//starboard/nx/arm64/system_get_property.cc",
     "//starboard/nx/arm64/system_get_property_impl.cc",
     "//starboard/shared/libjpeg/jpeg_image_decoder.cc",

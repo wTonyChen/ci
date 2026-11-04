@@ -25,4 +25,15 @@
 #ifndef SA_RESETHAND
 #define SA_RESETHAND 0x80000000
 #endif
+// newlib has no timegm(); the definition lives in shims/posix_shim.cc. This
+// header is force-included into every target C++ compile (GN_CXX_FLAGS
+// -include), so the declaration is visible where perfetto needs it.
+#include <time.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+time_t timegm(struct tm* tm);
+#ifdef __cplusplus
+}
+#endif
 #endif
