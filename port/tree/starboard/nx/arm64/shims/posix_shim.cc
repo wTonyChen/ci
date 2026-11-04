@@ -88,6 +88,9 @@ int timerfd_gettime(int fd, struct itimerspec* curr_value) {
 int prctl(int option, ...) {
   switch (option) {
     case PR_SET_NAME:
+    case PR_SET_PDEATHSIG:
+      // Nothing to do: thread names are cosmetic and we never fork, so a
+      // parent-death signal has no meaning here.
       return 0;
     case PR_GET_NAME: {
       va_list ap;

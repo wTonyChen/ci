@@ -11,6 +11,9 @@
 #ifndef PR_GET_NAME
 #define PR_GET_NAME 16
 #endif
+#ifndef PR_SET_PDEATHSIG
+#define PR_SET_PDEATHSIG 1
+#endif
 #ifndef PR_SET_TAGGED_ADDR_CTRL
 #define PR_SET_TAGGED_ADDR_CTRL 55
 #endif

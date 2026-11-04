@@ -89,4 +89,37 @@ patch_strerror("base/allocator/partition_allocator/src/partition_alloc/"
                "partition_alloc_base/posix/safe_strerror.cc")
 patch_strerror("base/posix/safe_strerror.cc")
 
+# 6) perfetto's subprocess_posix.cc uses wait4() and the Linux-only rusage
+#    fields (ru_maxrss/ru_minflt/ru_majflt/ru_nvcsw/ru_nivcsw), neither of which
+#    newlib has. Switch never forks, so waitpid() + zeroed stats is equivalent.
+SUB = "third_party/perfetto/src/base/subprocess_posix.cc"
+patch(SUB,
+      "    int wait_res = PERFETTO_EINTR(wait4(pid, &pid_stat, 0, &usg));\n",
+      "    (void)usg;\n"
+      "#if defined(__SWITCH__)\n"
+      "    int wait_res = PERFETTO_EINTR(waitpid(pid, &pid_stat, 0));\n"
+      "#else\n"
+      "    int wait_res = PERFETTO_EINTR(wait4(pid, &pid_stat, 0, &usg));\n"
+      "#endif\n",
+      "int wait_res = PERFETTO_EINTR(waitpid")
+patch(SUB,
+      "    rusage->cpu_utime_ms = tv_to_ms(usg.ru_utime);\n",
+      "#if defined(__SWITCH__)\n"
+      "    // newlib's struct rusage has none of the Linux accounting fields.\n"
+      "    rusage->cpu_utime_ms = 0;\n"
+      "    rusage->cpu_stime_ms = 0;\n"
+      "    rusage->max_rss_kb = 0;\n"
+      "    rusage->min_page_faults = 0;\n"
+      "    rusage->maj_page_faults = 0;\n"
+      "    rusage->vol_ctx_switch = 0;\n"
+      "    rusage->invol_ctx_switch = 0;\n"
+      "#else\n"
+      "    rusage->cpu_utime_ms = tv_to_ms(usg.ru_utime);\n",
+      "newlib's struct rusage has none")
+patch(SUB,
+      "    rusage->invol_ctx_switch = static_cast<uint32_t>(usg.ru_nivcsw);\n",
+      "    rusage->invol_ctx_switch = static_cast<uint32_t>(usg.ru_nivcsw);\n"
+      "#endif\n",
+      "usg.ru_nivcsw);\n#endif")
+
 print("all port patches applied")
