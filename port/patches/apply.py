@@ -252,6 +252,28 @@ else:
     open(FSH, "w").write(patched)
     print(f"  [ok]   {FSH} (whole body skipped on Switch)")
 
+def patch_function_body(path, signature, switch_body, marker):
+    """Wrap a whole function body in #if defined(__SWITCH__) ... #else ... #endif."""
+    src = open(path).read()
+    if marker in src:
+        print(f"  [skip] {path} already patched ({signature.strip()[:40]})")
+        return
+    assert signature in src, f"signature not found in {path}: {signature[:60]}"
+    i = src.index(signature) + len(signature)
+    depth, j = 1, i
+    while depth:
+        if src[j] == "{":
+            depth += 1
+        elif src[j] == "}":
+            depth -= 1
+        j += 1
+    body = src[i:j - 1]
+    out = (src[:i] + "\n#if defined(__SWITCH__)\n" + switch_body
+           + "\n#else\n" + body + "\n#endif  // __SWITCH__\n" + src[j - 1:])
+    open(path, "w").write(out)
+    print(f"  [ok]   {path} ({signature.strip()[:40]})")
+
+
 # 13) newlib's siginfo_t only has si_signo/si_code/si_value: no si_pid/si_uid/
 #     si_addr/... Cobalt's modular signal wrapper reads the full Linux layout.
 #     Signals are not used on Switch, so translate just the two common fields.
