@@ -6,8 +6,13 @@
 
 #include <stdint.h>
 
+// Layout mirrors the Linux aarch64 mcontext_t closely enough for abseil, which
+// only reads .pc and .regs[29] (frame pointer).
 typedef struct {
-  uint64_t pc;  // aarch64: program counter at the time of the signal
+  uint64_t fault_address;
+  uint64_t regs[31];
+  uint64_t sp;
+  uint64_t pc;
 } mcontext_t;
 
 typedef struct ucontext_t {

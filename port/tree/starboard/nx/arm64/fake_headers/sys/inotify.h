@@ -49,6 +49,18 @@
 #ifndef IN_MOVE_SELF
 #define IN_MOVE_SELF 0x00000800
 #endif
+#ifndef IN_UNMOUNT
+#define IN_UNMOUNT 0x00002000
+#endif
+#ifndef IN_Q_OVERFLOW
+#define IN_Q_OVERFLOW 0x00004000
+#endif
+#ifndef IN_MASK_ADD
+#define IN_MASK_ADD 0x20000000
+#endif
+#ifndef IN_EXCL_UNLINK
+#define IN_EXCL_UNLINK 0x04000000
+#endif
 #ifndef IN_ALL_EVENTS
 #define IN_ALL_EVENTS 0x00000FFF
 #endif

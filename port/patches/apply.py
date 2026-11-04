@@ -229,18 +229,27 @@ if "__SWITCH__" in open(FSH).read():
     print(f"  [skip] {FSH} already patched")
 else:
     src = open(FSH).read()
-    old = ("void InstallFailureSignalHandler(const FailureSignalHandlerOptions& "
-           "options) {\n")
-    new = ("void InstallFailureSignalHandler(const FailureSignalHandlerOptions& "
-           "options) {\n"
-           "#if defined(__SWITCH__)\n"
-           "  // newlib's struct sigaction has no sa_sigaction; no crash-signal "
-           "handling here.\n"
-           "  (void)options;\n"
-           "  return;\n"
-           "#endif\n")
-    assert old in src, "failure_signal_handler anchor not found"
-    open(FSH, "w").write(src.replace(old, new, 1))
-    print(f"  [ok]   {FSH}")
+    sig = ("void InstallFailureSignalHandler(const FailureSignalHandlerOptions& "
+           "options) {")
+    assert sig in src, "failure_signal_handler anchor not found"
+    i = src.index(sig) + len(sig)
+    depth, j = 1, i
+    while depth:
+        if src[j] == "{":
+            depth += 1
+        elif src[j] == "}":
+            depth -= 1
+        j += 1
+    body = src[i:j - 1]
+    patched = (src[:i]
+               + "\n#if defined(__SWITCH__)\n"
+               + "  // newlib's struct sigaction has no sa_sigaction, and Horizon "
+                 "homebrew has no useful POSIX crash-signal path.\n"
+               + "  (void)options;\n  return;\n#else\n"
+               + body
+               + "\n#endif  // __SWITCH__\n"
+               + src[j - 1:])
+    open(FSH, "w").write(patched)
+    print(f"  [ok]   {FSH} (whole body skipped on Switch)")
 
 print("all port patches applied")
