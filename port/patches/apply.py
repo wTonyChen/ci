@@ -156,4 +156,23 @@ patch("base/allocator/partition_allocator/src/partition_alloc/stack/stack.cc",
       "  pthread_attr_t attr;\n",
       "#elif defined(__SWITCH__)\n\nvoid* GetStackTop()")
 
+# 9) partition_alloc's page allocator chooses its access flags through a GNU
+#    indirect function (__attribute__((ifunc))) when the target advertises
+#    BTI/MTE. devkitA64's GCC does not support ifunc on a static bare-metal
+#    target ("'ifunc' is not supported on this target"), so take the plain
+#    non-MTE path on Switch.
+PAGE_ALLOC = ("base/allocator/partition_allocator/src/partition_alloc/"
+              "page_allocator_internals_posix.cc")
+if "__SWITCH__" in open(PAGE_ALLOC).read():
+    print(f"  [skip] {PAGE_ALLOC} already patched")
+else:
+    src = open(PAGE_ALLOC).read()
+    src, n = re.subn(
+        r"#if defined\(NEEDS_HANDLING_OF_HW_CAPABILITIES\)(\s*\n\s*__attribute__\(\(ifunc)",
+        r"#if defined(NEEDS_HANDLING_OF_HW_CAPABILITIES) && !defined(__SWITCH__)\1",
+        src, count=1)
+    assert n == 1, "ifunc anchor not found in " + PAGE_ALLOC
+    open(PAGE_ALLOC, "w").write(src)
+    print(f"  [ok]   {PAGE_ALLOC}")
+
 print("all port patches applied")
