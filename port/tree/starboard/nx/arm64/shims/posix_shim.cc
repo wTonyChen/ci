@@ -8,6 +8,8 @@
 #include <sys/eventfd.h>
 #include <sys/syscall.h>
 #include <sys/timerfd.h>
+#include <sys/prctl.h>
+#include <stdarg.h>
 
 extern "C" {
 
@@ -78,6 +80,29 @@ int timerfd_gettime(int fd, struct itimerspec* curr_value) {
   (void)curr_value;
   errno = ENOSYS;
   return -1;
+}
+
+// Horizon has no prctl(). Thread naming is cosmetic (no-op, report success);
+// everything else -- notably the aarch64 MTE / tagged-address probes -- is
+// advertised as unsupported so callers take their fallback path.
+int prctl(int option, ...) {
+  switch (option) {
+    case PR_SET_NAME:
+      return 0;
+    case PR_GET_NAME: {
+      va_list ap;
+      va_start(ap, option);
+      char* name = va_arg(ap, char*);
+      va_end(ap);
+      if (name) {
+        name[0] = '\0';
+      }
+      return 0;
+    }
+    default:
+      errno = ENOSYS;
+      return -1;
+  }
 }
 
 }  // extern "C"
