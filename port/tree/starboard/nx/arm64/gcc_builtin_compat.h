@@ -36,4 +36,15 @@ time_t timegm(struct tm* tm);
 #ifdef __cplusplus
 }
 #endif
+
+// partition_alloc's stack_trace_posix.cc gets ElfW()/ELFMAG/SELFMAG from
+// glibc's <link.h>/<elf.h>. newlib has <elf.h> but neither ElfW nor SELFMAG,
+// and no <link.h> at all. Fill the gaps here (aarch64 is LP64 -> Elf64_*).
+#include <elf.h>
+#ifndef SELFMAG
+#define SELFMAG 4
+#endif
+#ifndef ElfW
+#define ElfW(type) Elf64_##type
+#endif
 #endif

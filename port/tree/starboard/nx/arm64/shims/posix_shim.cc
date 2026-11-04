@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <switch.h>
 #include <sys/eventfd.h>
+#include <sys/syscall.h>
 
 extern "C" {
 
@@ -35,6 +37,18 @@ int eventfd_write(int fd, eventfd_t value) {
   (void)value;
   errno = ENOSYS;
   return -1;
+}
+
+// perfetto's thread_utils.h (Linux path) calls syscall(SYS_gettid). Horizon has
+// no syscall instruction for this, but libnx gives us a stable thread handle.
+long syscall(long number, ...) {
+  switch (number) {
+    case SYS_gettid:
+      return static_cast<long>(threadGetCurHandle());
+    default:
+      errno = ENOSYS;
+      return -1;
+  }
 }
 
 }  // extern "C"
