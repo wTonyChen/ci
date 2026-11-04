@@ -188,9 +188,8 @@ jobs:
             grep -ai error /tmp/ninja-step.log | grep -avE '^\[[0-9]+/[0-9]+\]' | sort -u | head -15 | cut -c1-200
             echo "--- ar / libprotoc command lines ---"
             grep -aE '(^|[^a-z])ar |llvm-ar|libprotoc' /tmp/ninja-step.log | head -6 | cut -c1-240
-            echo "--- flags of the failing g++ edges (one line each) ---"
-            grep -aE '^/opt/devkitpro/devkitA64/bin/aarch64-none-elf-g\+\+ ' /tmp/ninja-step.log | head -2 \
-              | while read -r L; do echo "$L" | tr ' ' '\n' | grep -aE '^-' | tr '\n' ' '; echo; done
+            echo "--- failing command lines (wrapped) ---"
+            grep -a 'aarch64-none-elf-g++' /tmp/ninja-step.log | head -2 | fold -w 150 | head -40
             echo "--- protobuf obj dir ---"
             ls -la out/nx/clang_x64/obj/third_party/protobuf/ 2>&1 | head -5
           done
