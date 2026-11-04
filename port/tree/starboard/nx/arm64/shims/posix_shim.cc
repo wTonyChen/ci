@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <dlfcn.h>
 #include <switch.h>
 #include <sys/eventfd.h>
 #include <sys/syscall.h>
@@ -106,6 +107,35 @@ int prctl(int option, ...) {
       errno = ENOSYS;
       return -1;
   }
+}
+
+// Horizon homebrew has no dynamic linker. Everything here fails cleanly so
+// callers (base/third_party/symbolize) degrade to "no symbol names".
+void* dlopen(const char* filename, int flags) {
+  (void)filename;
+  (void)flags;
+  return NULL;
+}
+
+void* dlsym(void* handle, const char* symbol) {
+  (void)handle;
+  (void)symbol;
+  return NULL;
+}
+
+int dlclose(void* handle) {
+  (void)handle;
+  return -1;
+}
+
+char* dlerror(void) {
+  return const_cast<char*>("dynamic loading is not available on Switch");
+}
+
+int dladdr(const void* addr, void* info) {
+  (void)addr;
+  (void)info;
+  return 0;
 }
 
 }  // extern "C"
