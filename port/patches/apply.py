@@ -290,4 +290,18 @@ patch_function_body(
      "  musl_si->musl_si_code = platform_si->si_code;\n"),
     "#if defined(__SWITCH__)\n  // newlib's siginfo_t has only")
 
+# 14) newlib's struct sigaction has no sa_sigaction and no SA_NOCLDWAIT.
+#     Cobalt's modular signal wrapper and abseil's failure handler both use them;
+#     Switch does not deliver POSIX signals anyway, so skip the handler install.
+guard_line("starboard/shared/modular/starboard_layer_posix_signal_abi_wrappers.cc",
+           "platform_act.sa_sigaction = ReverseWrapperHandler;")
+patch_function_body(
+    "third_party/abseil-cpp/absl/debugging/failure_signal_handler.cc",
+    ("static void InstallOneFailureHandler(FailureSignalData* data,\n"
+     "                                     void (*handler)(int, siginfo_t*, void*)) {"),
+    "  (void)data;\n  (void)handler;\n",
+    "static void InstallOneFailureHandler(FailureSignalData* data,\n"
+    "                                     void (*handler)(int, siginfo_t*, void*)) {\n"
+    "#if defined(__SWITCH__)")
+
 print("all port patches applied")

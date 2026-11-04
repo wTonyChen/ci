@@ -19,6 +19,9 @@
 #ifndef CLOCK_THREAD_CPUTIME_ID
 #define CLOCK_THREAD_CPUTIME_ID 3
 #endif
+#ifndef SA_NOCLDWAIT
+#define SA_NOCLDWAIT 0x20000000
+#endif
 #ifndef SA_ONSTACK
 #define SA_ONSTACK 0x08000000
 #endif
