@@ -68,4 +68,29 @@ patch(SUB,
       "#endif\n",
       "usg.ru_nivcsw);\n#endif")
 
+# 3) newlib's pthread_t is a POINTER to an incomplete struct, while glibc's is
+#    an integer. partition_alloc's PlatformThreadRef::hash_value() uses
+#    static_cast<uintptr_t>(id_), which is invalid for a pointer type.
+PTR = ("base/allocator/partition_allocator/src/partition_alloc/"
+       "partition_alloc_base/threading/platform_thread_ref.h")
+patch(PTR,
+      "#else\n"
+      "  template <typename Hasher>\n"
+      "  size_t hash_value() const {\n"
+      "    return Hasher()(static_cast<uintptr_t>(id_));\n"
+      "  }\n"
+      "#endif\n",
+      "#else\n"
+      "  template <typename Hasher>\n"
+      "  size_t hash_value() const {\n"
+      "#if defined(__SWITCH__)\n"
+      "    // newlib's pthread_t is a pointer type, not an integer.\n"
+      "    return Hasher()(reinterpret_cast<uintptr_t>(id_));\n"
+      "#else\n"
+      "    return Hasher()(static_cast<uintptr_t>(id_));\n"
+      "#endif\n"
+      "  }\n"
+      "#endif\n",
+      "newlib's pthread_t is a pointer type")
+
 print("all chromium patches applied")
