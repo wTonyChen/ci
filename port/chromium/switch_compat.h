@@ -4,6 +4,24 @@
 #ifndef SWITCH_COMPAT_H_
 #define SWITCH_COMPAT_H_
 
+// Linux SO_PEERCRED / struct ucred (perfetto's unix_socket.cc). glibc puts
+// these in <sys/socket.h>; newlib/libnx have neither.
+#if !defined(__clang__)
+#include <sys/types.h>
+#endif
+#ifndef SO_PEERCRED
+#define SO_PEERCRED 17
+#endif
+#ifndef NX_UCRED_DEFINED
+#define NX_UCRED_DEFINED
+struct ucred {
+  pid_t pid;
+  uid_t uid;
+  gid_t gid;
+};
+#endif
+
+
 // POSIX <limits.h> extras that newlib does not expose (symbolize.cc uses it).
 #if !defined(__clang__)
 #include <limits.h>
