@@ -18,10 +18,19 @@ dcheck_always_on = false
 use_sysroot = false
 use_custom_libcxx_for_host = true
 
-# NOTE: do NOT set is_clang / use_lld / use_thin_lto / use_custom_libcxx here.
-# Those are per-toolchain: the devkitA64 toolchain sets them in its
-# toolchain_args. Setting them globally also hits the HOST toolchain, which
-# then links clang-produced thin archives with GNU ld ("archive has no index").
+# These MUST be global (args.gn): our devkitA64 toolchain is the DEFAULT
+# toolchain, and GN ignores `toolchain_args` for the default toolchain
+# (see gcc_toolchain.gni: "ignored when this is the default toolchain").
+# The host toolchain is non-default, so its own toolchain_args (is_clang=true)
+# still win there — that is why the host keeps clang + libc++.
+is_clang = false
+use_custom_libcxx = false
+use_thin_lto = false
+clang_use_chrome_plugins = false
+
+# Deliberately NOT set: use_lld. The host toolchain needs lld (thin archives
+# produced with -S have no symbol index); leaving it at its default keeps lld
+# for the host and costs the target nothing (GCC links with its own ld).
 treat_warnings_as_errors = false
 
 # Keep the tree small and avoid subsystems that need a real OS.

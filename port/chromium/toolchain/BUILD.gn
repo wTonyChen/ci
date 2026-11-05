@@ -27,8 +27,9 @@ gcc_toolchain("devkita64") {
     current_os = "linux"
 
     # GCC identity. These are read by //build/config/* inside this toolchain.
+    # NOTE: for the DEFAULT toolchain these are ignored by GN; the real values
+    # live in args.gn. Kept here for the day this toolchain becomes non-default.
     is_clang = false
-    use_lld = false
     use_thin_lto = false
     use_custom_libcxx = false
     clang_use_chrome_plugins = false
