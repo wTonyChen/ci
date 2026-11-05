@@ -8,10 +8,11 @@
 import("//build/toolchain/gcc_toolchain.gni")
 
 gcc_toolchain("devkita64") {
-  # Must live INSIDE the source tree: ninja cannot depend on a tool binary that
-  # is outside the checkout ("missing and no known rule to make it"). The CI
-  # workflow symlinks /opt/devkitpro/devkitA64 to //third_party/devkitA64.
-  _bin = "//third_party/devkitA64/bin/aarch64-none-elf-"
+  # Must live INSIDE the source tree (ninja cannot depend on a tool outside the
+  # checkout) AND be rebased to a path relative to the build dir — a literal
+  # "//..." string is not a runnable path. The CI workflow symlinks
+  # /opt/devkitpro/devkitA64 to //third_party/devkitA64.
+  _bin = "${rebase_path("//third_party/devkitA64/bin", root_build_dir)}/aarch64-none-elf-"
 
   cc = "${_bin}gcc"
   cxx = "${_bin}g++"
