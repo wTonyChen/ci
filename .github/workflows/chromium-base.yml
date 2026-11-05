@@ -45,6 +45,8 @@ jobs:
         run: |
           mkdir -p "$WORK/src/port/chromium"
           cp -rv "$GITHUB_WORKSPACE/port/chromium/." "$WORK/src/port/chromium/"
+          echo "--- replacing root BUILD.gn (engine-only graph) ---"
+          cp "$WORK/src/port/chromium/BUILD.gn" "$WORK/src/BUILD.gn"
           echo "--- args.gn ---"
           cat "$WORK/src/port/chromium/args.gn"
 
