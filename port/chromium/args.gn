@@ -26,6 +26,9 @@ clang_use_chrome_plugins = false
 treat_warnings_as_errors = false
 
 # Keep the tree small and avoid subsystems that need a real OS.
+# No desktop UI toolkits: the root BUILD.gn gets replaced anyway, but keep
+# gn from loading GTK/ozone-X11 code paths if it ever does.
+use_gtk = false
 enable_nacl = false
 enable_linux_installer = false
 chrome_pgo_phase = 0

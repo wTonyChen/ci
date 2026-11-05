@@ -1,0 +1,22 @@
+# Temporary root BUILD.gn for the Nintendo Switch bring-up.
+#
+# Chromium's real root BUILD.gn pulls in every desktop-only target (GTK, CUPS,
+# libva, D-Bus, ...) and `gn gen` fails at the first missing pkg-config package.
+# For the Switch port we only need the engine libraries, so replace the root
+# file with the smallest graph that still exercises the toolchain:
+#   //base -> everything POSIX-ish that the real port has to fix first.
+#
+# This file is copied over src/BUILD.gn by the CI workflow. Delete it once the
+# port can afford to parse the full graph.
+
+group("gn_all") {
+  deps = [ "//base:base" ]
+}
+
+group("all") {
+  deps = [ "//base:base" ]
+}
+
+group("default") {
+  deps = [ "//base:base" ]
+}
