@@ -221,4 +221,12 @@ char* if_indextoname(unsigned int ifindex, char* ifname);
 #ifdef __cplusplus
 }
 #endif
+// newlib has no UTIME_NOW/UTIME_OMIT (glibc values); Cobalt's stat wrapper
+// translates them.
+#ifndef UTIME_NOW
+#define UTIME_NOW ((1l << 30) - 1l)
+#endif
+#ifndef UTIME_OMIT
+#define UTIME_OMIT ((1l << 30) - 2l)
+#endif
 #endif
