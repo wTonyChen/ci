@@ -80,6 +80,19 @@
 #define IN_DONT_FOLLOW 0x02000000
 #endif
 
+#ifndef NX_INOTIFY_EVENT_DEFINED
+#define NX_INOTIFY_EVENT_DEFINED
+// perfetto's FileWatchImpl does sizeof(struct inotify_event) and reads evt->len
+// and evt->name, so the struct (not just the constants) has to exist.
+struct inotify_event {
+  int wd;
+  uint32_t mask;
+  uint32_t cookie;
+  uint32_t len;
+  char name[];
+};
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
