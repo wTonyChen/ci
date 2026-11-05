@@ -197,4 +197,13 @@ int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t* mask);
 #ifdef __cplusplus
 }
 #endif
+// libnx's <net/if.h> has these commented out; Cobalt's socket ABI wrapper uses
+// if_nametoindex(). Switch has no interface index, so it returns 0 (failure).
+#ifdef __cplusplus
+extern "C" {
+#endif
+unsigned int if_nametoindex(const char* ifname);
+#ifdef __cplusplus
+}
+#endif
 #endif

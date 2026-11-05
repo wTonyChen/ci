@@ -332,4 +332,16 @@ patch("starboard/shared/modular/starboard_layer_posix_socket_abi_wrappers.cc",
       "#include <net/if.h>\n#include <netinet/in.h>\n#include <arpa/inet.h>\n",
       "#include <netinet/in.h>")
 
+# 17) libnx's <netinet/in.h> has in6addr_loopback but no IN6ADDR_LOOPBACK_INIT
+#     macro, and its <net/if.h> has if_nametoindex commented out.
+patch("starboard/shared/modular/starboard_layer_posix_socket_abi_wrappers.cc",
+      "          address->sin6_addr = IN6ADDR_LOOPBACK_INIT;\n",
+      "#if defined(__SWITCH__)\n"
+      "          // libnx exposes in6addr_loopback but not this macro.\n"
+      "          address->sin6_addr.s6_addr[15] = 1;\n"
+      "#else\n"
+      "          address->sin6_addr = IN6ADDR_LOOPBACK_INIT;\n"
+      "#endif\n",
+      "address->sin6_addr.s6_addr[15] = 1;")
+
 print("all port patches applied")

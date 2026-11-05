@@ -327,4 +327,10 @@ void freeifaddrs(struct ifaddrs* ifa) {
   (void)ifa;
 }
 
+// No interface index space on Switch; POSIX says 0 means failure.
+unsigned int if_nametoindex(const char* ifname) {
+  (void)ifname;
+  return 0;
+}
+
 }  // extern "C"
