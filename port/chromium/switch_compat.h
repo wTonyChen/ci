@@ -105,18 +105,12 @@ int* __errno_location(void);
 }
 #endif
 
-// partition_alloc's stack_trace_posix.cc gets ElfW()/ELFMAG/SELFMAG from
-// glibc's <link.h>/<elf.h>. newlib has <elf.h> but neither ElfW nor SELFMAG,
-// and no <link.h> at all. Fill the gaps here (aarch64 is LP64 -> Elf64_*).
-#if !defined(__clang__)
-#include <elf.h>
-#endif
-#ifndef SELFMAG
-#define SELFMAG 4
-#endif
-#ifndef ElfW
-#define ElfW(type) Elf64_##type
-#endif
+// NOTE: ElfW()/ELFMAG are deliberately NOT defined here. <elf.h> defines a lot
+// of ELF* macros (ELFMAG0, PT_LOAD, SHT_NOTE, ...) and perfetto defines its own
+// `constexpr auto ELFMAG0` etc. in trace_processor/util/elf/elf.h — force-
+// including <elf.h> into every TU turns those into "expected unqualified-id
+// before numeric constant". They now live in fake_headers/link.h, which only
+// the partition_alloc stack-trace TU includes.
 // Cobalt's modular fcntl wrappers reference Linux-only open/fcntl constants
 // that newlib does not define. Values are musl's (aarch64).
 #ifndef O_PATH
