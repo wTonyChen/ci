@@ -96,18 +96,20 @@ patch(PTR,
 # 4) newlib declares strerror_r with the GNU signature (returns char*) when
 #    _GNU_SOURCE is set, while Chromium/partition_alloc pick the POSIX overload
 #    through &strerror_r. Same fix as the Cobalt port: call the GNU flavour.
+# Chromium main passes a span<char> (no explicit length):
+#   wrap_posix_strerror_r(&strerror_r, err, buf);
 STRERROR_CALL = re.compile(
-    r'(?m)^(?P<indent>[ \t]*)wrap_posix_strerror_r\(&strerror_r, err, buf, len\);')
+    r'(?m)^(?P<indent>[ \t]*)wrap_posix_strerror_r\(&strerror_r, err, buf\);')
 
 STRERROR_NEW = r'''%(i)s#if defined(__SWITCH__)
 %(i)s  // newlib's strerror_r is the GNU flavour (returns char*).
-%(i)s  char* rc = strerror_r(err, buf, len);
-%(i)s  if (rc != buf) {
+%(i)s  char* rc = strerror_r(err, buf.data(), buf.size());
+%(i)s  if (rc != buf.data()) {
 %(i)s    buf[0] = '\0';
-%(i)s    strncat(buf, rc, len - 1);
+%(i)s    strncat(buf.data(), rc, buf.size() - 1);
 %(i)s  }
 %(i)s#else
-%(i)swrap_posix_strerror_r(&strerror_r, err, buf, len);
+%(i)swrap_posix_strerror_r(&strerror_r, err, buf);
 %(i)s#endif'''
 
 
