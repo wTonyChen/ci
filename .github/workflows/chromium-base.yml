@@ -57,9 +57,13 @@ jobs:
           cp -rv "$GITHUB_WORKSPACE/port/chromium/." "$WORK/src/port/chromium/"
           echo "--- replacing root BUILD.gn (engine-only graph) ---"
           cp "$WORK/src/port/chromium/BUILD.gn" "$WORK/src/BUILD.gn"
-          echo "--- toolchain inside the tree (ninja needs it) ---"
+          echo "--- toolchain + libnx inside the tree ---"
           ln -sfn /opt/devkitpro/devkitA64 "$WORK/src/third_party/devkitA64"
+          ln -sfn /opt/devkitpro/libnx "$WORK/src/third_party/libnx"
           ls -l "$WORK/src/third_party/devkitA64/bin/aarch64-none-elf-gcc"
+          ls -d "$WORK/src/third_party/libnx/include"
+          echo "--- patching BUILDCONFIG (wire switch_config into default configs) ---"
+          cd "$WORK/src" && python3 port/chromium/patch.py
           echo "--- args.gn ---"
           cat "$WORK/src/port/chromium/args.gn"
 
