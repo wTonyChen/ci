@@ -29,6 +29,11 @@ treat_warnings_as_errors = false
 # No desktop UI toolkits: the root BUILD.gn gets replaced anyway, but keep
 # gn from loading GTK/ozone-X11 code paths if it ever does.
 use_gtk = false
+# No NSS / D-Bus / CUPS: none of them exist on Horizon and gn would try to
+# pkg-config them at generate time.
+use_nss_certs = false
+use_dbus = false
+use_cups = false
 enable_nacl = false
 enable_linux_installer = false
 chrome_pgo_phase = 0
