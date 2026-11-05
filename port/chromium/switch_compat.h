@@ -3,6 +3,14 @@
 // gcc_builtin_compat.h, which was validated over ~20 CI rounds.
 #ifndef SWITCH_COMPAT_H_
 #define SWITCH_COMPAT_H_
+
+// HOST CLANG: inert. Rust bindgen is invoked with the *target* cflags, so it
+// also gets `-include switch_compat.h`; none of the newlib-facing declarations
+// below make sense there (and some of their types do not even exist).
+// The whole body is therefore GCC-only.
+#if defined(__clang__)
+
+#else  // !__clang__
 #if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 14)
 #define __builtin_clzg(x, y) \
   _Generic((x), \
@@ -279,4 +287,5 @@ int clock_nanosleep(clockid_t clock_id, int flags,
 #ifndef CLOCK_BOOTTIME_ALARM
 #define CLOCK_BOOTTIME_ALARM 9
 #endif
+#endif  // !__clang__
 #endif  // SWITCH_COMPAT_H_
