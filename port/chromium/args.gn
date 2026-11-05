@@ -1,0 +1,39 @@
+# Chromium → Nintendo Switch (devkitA64 + newlib), first bring-up args.
+#
+# Goal of this stage: get `gn gen` to succeed and `ninja base` to compile.
+# Everything here mirrors what worked for the Cobalt tree, minus Starboard.
+
+target_os = "linux"
+target_cpu = "arm64"
+
+# Default toolchain = devkitA64; host tools stay on Chromium's clang.
+custom_toolchain = "//port/chromium/toolchain:devkita64"
+host_toolchain = "//build/toolchain/linux:clang_x64"
+
+is_debug = false
+symbol_level = 0
+dcheck_always_on = false
+
+# No sysroot, no libc++ for the target: devkitA64 ships newlib + libstdc++.
+use_sysroot = false
+use_custom_libcxx = false
+use_custom_libcxx_for_host = true
+
+is_clang = false
+use_lld = false
+use_thin_lto = false
+clang_use_chrome_plugins = false
+treat_warnings_as_errors = false
+
+# Keep the tree small and avoid subsystems that need a real OS.
+enable_nacl = false
+enable_linux_installer = false
+chrome_pgo_phase = 0
+use_remoteexec = false
+use_reclient = false
+
+# Switch has no PAC/BTI; also keeps -mbranch-protection away from host bindgen.
+arm_control_flow_integrity = "none"
+
+# V8: JIT is available on Switch (jitCreate), but the sandbox is not.
+v8_enable_sandbox = false

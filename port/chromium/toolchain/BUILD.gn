@@ -1,0 +1,35 @@
+# Nintendo Switch (devkitA64) toolchain for the Chromium build.
+#
+# Chromium's own build/ already supports custom_toolchain + gcc_toolchain, so
+# this is deliberately tiny: point it at the devkitA64 binaries and flip the
+# clang-only buildargs inside this toolchain's scope (the host toolchain keeps
+# clang + libc++, which Chromium's bundled libc++ requires).
+
+import("//build/toolchain/gcc_toolchain.gni")
+
+gcc_toolchain("devkita64") {
+  _bin = "/opt/devkitpro/devkitA64/bin/aarch64-none-elf-"
+
+  cc = "${_bin}gcc"
+  cxx = "${_bin}g++"
+  ar = "${_bin}ar"
+  ld = cxx
+  readelf = "${_bin}readelf"
+  nm = "${_bin}nm"
+
+  toolchain_args = {
+    current_cpu = "arm64"
+    current_os = "linux"
+
+    # GCC identity. These are read by //build/config/* inside this toolchain.
+    is_clang = false
+    use_lld = false
+    use_thin_lto = false
+    use_custom_libcxx = false
+    clang_use_chrome_plugins = false
+
+    # No remote execution / reclient for a homebrew cross build.
+    use_remoteexec = false
+    use_reclient = false
+  }
+}
