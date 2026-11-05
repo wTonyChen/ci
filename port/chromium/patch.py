@@ -93,4 +93,38 @@ patch(PTR,
       "#endif\n",
       "newlib's pthread_t is a pointer type")
 
+# 4) newlib declares strerror_r with the GNU signature (returns char*) when
+#    _GNU_SOURCE is set, while Chromium/partition_alloc pick the POSIX overload
+#    through &strerror_r. Same fix as the Cobalt port: call the GNU flavour.
+STRERROR_CALL = re.compile(
+    r'(?m)^(?P<indent>[ \t]*)wrap_posix_strerror_r\(&strerror_r, err, buf, len\);')
+
+STRERROR_NEW = r'''%(i)s#if defined(__SWITCH__)
+%(i)s  // newlib's strerror_r is the GNU flavour (returns char*).
+%(i)s  char* rc = strerror_r(err, buf, len);
+%(i)s  if (rc != buf) {
+%(i)s    buf[0] = '\0';
+%(i)s    strncat(buf, rc, len - 1);
+%(i)s  }
+%(i)s#else
+%(i)swrap_posix_strerror_r(&strerror_r, err, buf, len);
+%(i)s#endif'''
+
+
+def patch_strerror(path):
+    src = open(path).read()
+    if "__SWITCH__" in src:
+        print(f"  [skip] {path} already patched")
+        return
+    m = STRERROR_CALL.search(src)
+    assert m, f"strerror anchor not found in {path}"
+    new = STRERROR_NEW % {"i": m.group("indent")}
+    open(path, "w").write(src[:m.start()] + new + src[m.end():])
+    print(f"  [ok]   {path}")
+
+
+patch_strerror("base/allocator/partition_allocator/src/partition_alloc/"
+               "partition_alloc_base/posix/safe_strerror.cc")
+patch_strerror("base/posix/safe_strerror.cc")
+
 print("all chromium patches applied")
