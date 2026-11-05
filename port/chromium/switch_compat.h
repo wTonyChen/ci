@@ -246,4 +246,27 @@ int clock_nanosleep(clockid_t clock_id, int flags,
 #ifdef __cplusplus
 }
 #endif
+// newlib only spells out a couple of POSIX clock ids; Linux code paths in
+// Chromium/perfetto reference the whole set. Values are the Linux ones.
+#ifndef CLOCK_PROCESS_CPUTIME_ID
+#define CLOCK_PROCESS_CPUTIME_ID 2
+#endif
+#ifndef CLOCK_MONOTONIC_RAW
+#define CLOCK_MONOTONIC_RAW 4
+#endif
+#ifndef CLOCK_REALTIME_COARSE
+#define CLOCK_REALTIME_COARSE 5
+#endif
+#ifndef CLOCK_MONOTONIC_COARSE
+#define CLOCK_MONOTONIC_COARSE 6
+#endif
+#ifndef CLOCK_BOOTTIME
+#define CLOCK_BOOTTIME 7
+#endif
+#ifndef CLOCK_REALTIME_ALARM
+#define CLOCK_REALTIME_ALARM 8
+#endif
+#ifndef CLOCK_BOOTTIME_ALARM
+#define CLOCK_BOOTTIME_ALARM 9
+#endif
 #endif  // SWITCH_COMPAT_H_
