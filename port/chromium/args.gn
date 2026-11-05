@@ -34,6 +34,18 @@ use_gtk = false
 use_nss_certs = false
 use_dbus = false
 use_cups = false
+# Desktop Linux features that gn would otherwise try to pkg-config at generate
+# time. Switch has none of them.
+use_glib = false
+use_gio = false
+use_udev = false
+use_libpci = false
+use_vaapi = false
+use_alsa = false
+use_pulseaudio = false
+use_x11 = false
+use_ozone = false
+use_kerberos = false
 enable_nacl = false
 enable_linux_installer = false
 chrome_pgo_phase = 0
