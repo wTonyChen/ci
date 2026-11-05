@@ -1,13 +1,41 @@
 # Temporary root BUILD.gn for the Nintendo Switch bring-up.
 #
-# Chromium's real root BUILD.gn pulls in every desktop-only target (GTK, CUPS,
-# libva, D-Bus, ...) and `gn gen` fails at the first missing pkg-config package.
-# For the Switch port we only need the engine libraries, so replace the root
-# file with the smallest graph that still exercises the toolchain:
-#   //base -> everything POSIX-ish that the real port has to fix first.
+# Two jobs:
+#   1. provide `switch_config`, the one config that every *target* compile needs
+#      (defines, fake POSIX headers, force-included compat header). It is wired
+#      into BUILDCONFIG's default_compiler_configs by port/chromium/patch.py,
+#      guarded with `if (!is_clang)` so the host toolchain stays untouched.
+#   2. replace the real root BUILD.gn, whose gn_all pulls in every desktop-only
+#      target (GTK, CUPS, libva, D-Bus, ...) and makes `gn gen` fail at the
+#      first missing pkg-config package. We only need the engine for now.
 #
-# This file is copied over src/BUILD.gn by the CI workflow. Delete it once the
-# port can afford to parse the full graph.
+# Delete this overlay once the port can afford to parse the full graph.
+
+config("switch_config") {
+  defines = [
+    "__SWITCH__",
+    "__linux__",
+    "_GNU_SOURCE",
+    "_DEFAULT_SOURCE",
+    "__STDC_FORMAT_MACROS",
+    "__STDC_CONSTANT_MACROS",
+  ]
+
+  include_dirs = [
+    "//port/chromium/fake_headers",
+    "//third_party/libnx/include",
+  ]
+
+  _compat = rebase_path("//port/chromium/switch_compat.h", root_build_dir)
+  cflags = [
+    "-include",
+    _compat,
+  ]
+  cflags_cc = [
+    "-include",
+    _compat,
+  ]
+}
 
 group("gn_all") {
   deps = [ "//base:base" ]
