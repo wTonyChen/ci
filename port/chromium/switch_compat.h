@@ -43,11 +43,17 @@
 // newlib has no timegm(); the definition lives in shims/posix_shim.cc. This
 // header is force-included into every target C++ compile (GN_CXX_FLAGS
 // -include), so the declaration is visible where perfetto needs it.
+#if !defined(__clang__)
+// Host clang (Rust bindgen) also receives this -include; it must not pull
+// newlib/devkitA64 headers, so only the real GCC target includes anything.
 #include <time.h>
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if !defined(__clang__)
 time_t timegm(struct tm* tm);
+#endif
 #ifdef __cplusplus
 }
 #endif
@@ -66,7 +72,9 @@ int* __errno_location(void);
 // partition_alloc's stack_trace_posix.cc gets ElfW()/ELFMAG/SELFMAG from
 // glibc's <link.h>/<elf.h>. newlib has <elf.h> but neither ElfW nor SELFMAG,
 // and no <link.h> at all. Fill the gaps here (aarch64 is LP64 -> Elf64_*).
+#if !defined(__clang__)
 #include <elf.h>
+#endif
 #ifndef SELFMAG
 #define SELFMAG 4
 #endif
@@ -90,8 +98,10 @@ int* __errno_location(void);
 // newlib's pthread is a stub: no scopes / scheduling policy / getattr_np.
 // Cobalt's modular pthread ABI wrappers call these glibc/POSIX extensions, so
 // declare them here and let shims/posix_shim.cc answer ENOSYS.
+#if !defined(__clang__)
 #include <pthread.h>
 #include <sched.h>
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
