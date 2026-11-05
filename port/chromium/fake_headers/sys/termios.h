@@ -78,6 +78,19 @@ struct termios {
 #define TCSADRAIN 1
 #define TCSAFLUSH 2
 
+/* Window size (normally in <sys/ioctl.h>, but newlib's is missing and perfetto
+   includes <termios.h> first). */
+#ifndef TIOCGWINSZ
+struct winsize {
+  unsigned short ws_row;
+  unsigned short ws_col;
+  unsigned short ws_xpixel;
+  unsigned short ws_ypixel;
+};
+#define TIOCGWINSZ 0x5413
+#define TIOCSWINSZ 0x5414
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
