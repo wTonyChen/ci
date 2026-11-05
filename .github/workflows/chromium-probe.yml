@@ -1,0 +1,47 @@
+name: chromium-probe
+
+# Answers one question: can a GitHub-hosted runner hold a Chromium checkout?
+# Syncs chromium/src with --no-history and reports disk usage. Builds nothing.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      WORK: ${{ github.workspace }}/work
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost 2>/dev/null || true
+          sudo apt-get clean || true
+          echo "--- after cleanup ---"
+          df -h /
+
+      - name: depot_tools
+        run: |
+          git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git /opt/depot_tools
+          echo "/opt/depot_tools" >> "$GITHUB_PATH"
+
+      - name: gclient sync chromium (no history)
+        run: |
+          mkdir -p "$WORK" && cd "$WORK"
+          gclient config --name=src "https://chromium.googlesource.com/chromium/src.git" --unmanaged
+          set +e
+          timeout 2700 gclient sync --no-history -j4 > /tmp/sync.log 2>&1
+          rc=$?
+          echo "=== sync rc=$rc ==="
+          tail -30 /tmp/sync.log
+          echo "=== disk after ==="
+          df -h / | tail -2
+          echo "=== src size ==="
+          du -sh src 2>/dev/null
+          echo "=== top dirs ==="
+          du -sh src/* 2>/dev/null | sort -h | tail -15
+          exit 0
