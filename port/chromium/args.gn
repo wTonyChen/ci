@@ -16,13 +16,12 @@ dcheck_always_on = false
 
 # No sysroot, no libc++ for the target: devkitA64 ships newlib + libstdc++.
 use_sysroot = false
-use_custom_libcxx = false
 use_custom_libcxx_for_host = true
 
-is_clang = false
-use_lld = false
-use_thin_lto = false
-clang_use_chrome_plugins = false
+# NOTE: do NOT set is_clang / use_lld / use_thin_lto / use_custom_libcxx here.
+# Those are per-toolchain: the devkitA64 toolchain sets them in its
+# toolchain_args. Setting them globally also hits the HOST toolchain, which
+# then links clang-produced thin archives with GNU ld ("archive has no index").
 treat_warnings_as_errors = false
 
 # Keep the tree small and avoid subsystems that need a real OS.
