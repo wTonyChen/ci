@@ -47,6 +47,9 @@ jobs:
           cp -rv "$GITHUB_WORKSPACE/port/chromium/." "$WORK/src/port/chromium/"
           echo "--- replacing root BUILD.gn (engine-only graph) ---"
           cp "$WORK/src/port/chromium/BUILD.gn" "$WORK/src/BUILD.gn"
+          echo "--- toolchain inside the tree (ninja needs it) ---"
+          ln -sfn /opt/devkitpro/devkitA64 "$WORK/src/third_party/devkitA64"
+          ls -l "$WORK/src/third_party/devkitA64/bin/aarch64-none-elf-gcc"
           echo "--- args.gn ---"
           cat "$WORK/src/port/chromium/args.gn"
 
