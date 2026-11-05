@@ -206,4 +206,19 @@ unsigned int if_nametoindex(const char* ifname);
 #ifdef __cplusplus
 }
 #endif
+// libnx's <sys/socket.h> is missing two Linux message flags and its <net/if.h>
+// has if_indextoname() commented out; Cobalt's socket ABI wrapper uses all three.
+#ifndef MSG_CONFIRM
+#define MSG_CONFIRM 0x800
+#endif
+#ifndef MSG_MORE
+#define MSG_MORE 0x8000
+#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
+char* if_indextoname(unsigned int ifindex, char* ifname);
+#ifdef __cplusplus
+}
+#endif
 #endif

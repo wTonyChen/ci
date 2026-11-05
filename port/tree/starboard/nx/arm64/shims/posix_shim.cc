@@ -333,4 +333,11 @@ unsigned int if_nametoindex(const char* ifname) {
   return 0;
 }
 
+// No interface index space on Switch; POSIX returns NULL on failure.
+char* if_indextoname(unsigned int ifindex, char* ifname) {
+  (void)ifindex;
+  (void)ifname;
+  return nullptr;
+}
+
 }  // extern "C"
