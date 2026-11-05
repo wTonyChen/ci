@@ -13,6 +13,7 @@
 #include <sys/random.h>
 #include <sys/inotify.h>
 #include <ifaddrs.h>
+#include <sys/uio.h>
 #include <pthread.h>
 #include <sched.h>
 #include <stdarg.h>
@@ -338,6 +339,80 @@ char* if_indextoname(unsigned int ifindex, char* ifname) {
   (void)ifindex;
   (void)ifname;
   return nullptr;
+}
+
+// newlib hides clock_nanosleep() behind _POSIX_CLOCK_SELECTION; build it on
+// nanosleep(), converting an absolute deadline into a relative interval first.
+int clock_nanosleep(clockid_t clock_id, int flags,
+                    const struct timespec* rqtp, struct timespec* rmtp) {
+  if (rqtp == nullptr) {
+    return EINVAL;
+  }
+  struct timespec req = *rqtp;
+  if (flags & TIMER_ABSTIME) {
+    struct timespec now;
+    if (clock_gettime(clock_id, &now) != 0) {
+      return errno;
+    }
+    req.tv_sec = rqtp->tv_sec - now.tv_sec;
+    req.tv_nsec = rqtp->tv_nsec - now.tv_nsec;
+    if (req.tv_nsec < 0) {
+      req.tv_sec -= 1;
+      req.tv_nsec += 1000000000L;
+    }
+    if (req.tv_sec < 0) {
+      return 0;  // deadline already passed
+    }
+  }
+  if (nanosleep(&req, rmtp) != 0) {
+    return errno;
+  }
+  return 0;
+}
+
+// Vector I/O on top of read()/write(); newlib has no <sys/uio.h>.
+ssize_t readv(int fd, const struct iovec* iov, int iovcnt) {
+  ssize_t total = 0;
+  for (int i = 0; i < iovcnt; ++i) {
+    ssize_t n = read(fd, iov[i].iov_base, iov[i].iov_len);
+    if (n < 0) {
+      return total > 0 ? total : n;
+    }
+    total += n;
+    if (static_cast<size_t>(n) < iov[i].iov_len) {
+      break;  // short read: stop like the kernel would
+    }
+  }
+  return total;
+}
+
+ssize_t writev(int fd, const struct iovec* iov, int iovcnt) {
+  ssize_t total = 0;
+  for (int i = 0; i < iovcnt; ++i) {
+    ssize_t n = write(fd, iov[i].iov_base, iov[i].iov_len);
+    if (n < 0) {
+      return total > 0 ? total : n;
+    }
+    total += n;
+    if (static_cast<size_t>(n) < iov[i].iov_len) {
+      break;
+    }
+  }
+  return total;
+}
+
+ssize_t preadv(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
+  if (lseek(fd, offset, SEEK_SET) < 0) {
+    return -1;
+  }
+  return readv(fd, iov, iovcnt);
+}
+
+ssize_t pwritev(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
+  if (lseek(fd, offset, SEEK_SET) < 0) {
+    return -1;
+  }
+  return writev(fd, iov, iovcnt);
 }
 
 }  // extern "C"

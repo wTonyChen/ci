@@ -229,4 +229,18 @@ char* if_indextoname(unsigned int ifindex, char* ifname);
 #ifndef UTIME_OMIT
 #define UTIME_OMIT ((1l << 30) - 2l)
 #endif
+// newlib hides clock_nanosleep() behind _POSIX_CLOCK_SELECTION (which it does
+// not support). Cobalt's time ABI wrapper needs it; the shim builds it on
+// nanosleep().
+#ifndef TIMER_ABSTIME
+#define TIMER_ABSTIME 1
+#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
+int clock_nanosleep(clockid_t clock_id, int flags,
+                    const struct timespec* rqtp, struct timespec* rmtp);
+#ifdef __cplusplus
+}
+#endif
 #endif
