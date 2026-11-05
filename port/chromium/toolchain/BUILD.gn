@@ -8,7 +8,10 @@
 import("//build/toolchain/gcc_toolchain.gni")
 
 gcc_toolchain("devkita64") {
-  _bin = "/opt/devkitpro/devkitA64/bin/aarch64-none-elf-"
+  # Must live INSIDE the source tree: ninja cannot depend on a tool binary that
+  # is outside the checkout ("missing and no known rule to make it"). The CI
+  # workflow symlinks /opt/devkitpro/devkitA64 to //third_party/devkitA64.
+  _bin = "//third_party/devkitA64/bin/aarch64-none-elf-"
 
   cc = "${_bin}gcc"
   cxx = "${_bin}g++"
