@@ -1,0 +1,78 @@
+name: chromium-base
+
+# First attempt at compiling Chromium's //base with devkitA64 on a Switch target.
+# Slow by design: gclient sync (~17 min) + gn gen + ninja base. One round ~30 min.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      WORK: ${{ github.workspace }}/work
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost 2>/dev/null || true
+          sudo apt-get clean || true
+          df -h /
+
+      - name: depot_tools
+        run: |
+          git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git /opt/depot_tools
+          echo "/opt/depot_tools" >> "$GITHUB_PATH"
+
+      - name: gclient sync chromium (no history)
+        run: |
+          mkdir -p "$WORK" && cd "$WORK"
+          gclient config --name=src "https://chromium.googlesource.com/chromium/src.git" --unmanaged
+          timeout 2700 gclient sync --no-history -j4 > /tmp/sync.log 2>&1
+          rc=$?
+          echo "=== sync rc=$rc ==="
+          tail -5 /tmp/sync.log
+          df -h / | tail -1
+          exit $rc
+
+      - name: Overlay Switch config
+        run: |
+          mkdir -p "$WORK/src/port/chromium"
+          cp -rv "$GITHUB_WORKSPACE/port/chromium/." "$WORK/src/port/chromium/"
+          echo "--- args.gn ---"
+          cat "$WORK/src/port/chromium/args.gn"
+
+      - name: gn gen
+        run: |
+          cd "$WORK/src"
+          GN=buildtools/linux64/gn
+          [ -x "$GN" ] || GN=gn
+          echo "gn: $($GN --version 2>&1)"
+          ARGS="$(grep -v '^#' port/chromium/args.gn | tr '\n' ' ')"
+          echo "args: $ARGS"
+          set +e
+          timeout 900 "$GN" gen out/switch --args="$ARGS" > /tmp/gn.log 2>&1
+          rc=$?
+          echo "=== gn gen rc=$rc ==="
+          grep -aE 'ERROR|error|Unresolved|assert' /tmp/gn.log | head -30
+          tail -20 /tmp/gn.log
+          exit 0
+
+      - name: ninja base
+        run: |
+          cd "$WORK/src"
+          [ -d out/switch ] || { echo "no out/switch (gn gen failed)"; exit 0; }
+          set +e
+          timeout 3000 ninja -C out/switch -j4 base > /tmp/ninja.log 2>&1
+          rc=$?
+          echo "=== ninja base rc=$rc ==="
+          grep -aE 'FAILED|fatal error|error:|undefined reference' /tmp/ninja.log \
+            | sed 's/^\[\?[0-9]*\/[0-9]*\]\? *//' | sort -u | head -25
+          tail -15 /tmp/ninja.log
+          exit 0
