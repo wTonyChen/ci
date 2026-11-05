@@ -35,4 +35,37 @@ patch("build/config/BUILDCONFIG.gn",
       '}\n',
       "//:switch_config")
 
+# 2) perfetto's subprocess_posix.cc uses wait4() and the Linux-only rusage
+#    fields, neither of which newlib has. Switch never forks, so waitpid() plus
+#    zeroed stats is equivalent. (Same fix as the frozen Cobalt port.)
+SUB = "third_party/perfetto/src/base/subprocess_posix.cc"
+patch(SUB,
+      "    int wait_res = PERFETTO_EINTR(wait4(pid, &pid_stat, 0, &usg));\n",
+      "    (void)usg;\n"
+      "#if defined(__SWITCH__)\n"
+      "    int wait_res = PERFETTO_EINTR(waitpid(pid, &pid_stat, 0));\n"
+      "#else\n"
+      "    int wait_res = PERFETTO_EINTR(wait4(pid, &pid_stat, 0, &usg));\n"
+      "#endif\n",
+      "int wait_res = PERFETTO_EINTR(waitpid")
+patch(SUB,
+      "    rusage->cpu_utime_ms = tv_to_ms(usg.ru_utime);\n",
+      "#if defined(__SWITCH__)\n"
+      "    // newlib's struct rusage has none of the Linux accounting fields.\n"
+      "    rusage->cpu_utime_ms = 0;\n"
+      "    rusage->cpu_stime_ms = 0;\n"
+      "    rusage->max_rss_kb = 0;\n"
+      "    rusage->min_page_faults = 0;\n"
+      "    rusage->maj_page_faults = 0;\n"
+      "    rusage->vol_ctx_switch = 0;\n"
+      "    rusage->invol_ctx_switch = 0;\n"
+      "#else\n"
+      "    rusage->cpu_utime_ms = tv_to_ms(usg.ru_utime);\n",
+      "newlib's struct rusage has none")
+patch(SUB,
+      "    rusage->invol_ctx_switch = static_cast<uint32_t>(usg.ru_nivcsw);\n",
+      "    rusage->invol_ctx_switch = static_cast<uint32_t>(usg.ru_nivcsw);\n"
+      "#endif\n",
+      "usg.ru_nivcsw);\n#endif")
+
 print("all chromium patches applied")
