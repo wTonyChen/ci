@@ -4,6 +4,15 @@
 #ifndef SWITCH_COMPAT_H_
 #define SWITCH_COMPAT_H_
 
+// POSIX <limits.h> extras that newlib does not expose (symbolize.cc uses it).
+#if !defined(__clang__)
+#include <limits.h>
+#endif
+#ifndef SSIZE_MAX
+#define SSIZE_MAX ((ssize_t)(SIZE_MAX >> 1))
+#endif
+
+
 // HOST CLANG: inert. Rust bindgen is invoked with the *target* cflags, so it
 // also gets `-include switch_compat.h`; none of the newlib-facing declarations
 // below make sense there (and some of their types do not even exist).
