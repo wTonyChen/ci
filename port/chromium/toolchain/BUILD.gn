@@ -12,7 +12,8 @@ gcc_toolchain("devkita64") {
   # checkout) AND be rebased to a path relative to the build dir — a literal
   # "//..." string is not a runnable path. The CI workflow symlinks
   # /opt/devkitpro/devkitA64 to //third_party/devkitA64.
-  _bin = "${rebase_path("//third_party/devkitA64/bin", root_build_dir)}/aarch64-none-elf-"
+  _prefix = rebase_path("//third_party/devkitA64/bin", root_build_dir)
+  _bin = "${_prefix}/aarch64-none-elf-"
 
   cc = "${_bin}gcc"
   cxx = "${_bin}g++"
