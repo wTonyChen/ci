@@ -113,6 +113,29 @@ STRERROR_NEW = r'''%(i)s#if defined(__SWITCH__)
 %(i)s#endif'''
 
 
+def patch_function_body(path, signature, switch_body, marker):
+    """Wrap a whole function body in #if defined(__SWITCH__) ... #else ... #endif."""
+    src = open(path).read()
+    if marker in src:
+        print(f"  [skip] {path} already patched ({signature.strip()[:40]})")
+        return
+    assert signature in src, f"signature not found in {path}: {signature[:60]}"
+    i = src.index(signature) + len(signature)
+    depth, j = 1, i
+    while depth:
+        if src[j] == "{":
+            depth += 1
+        elif src[j] == "}":
+            depth -= 1
+        j += 1
+    body = src[i:j - 1]
+    out = (src[:i] + "\n#if defined(__SWITCH__)\n" + switch_body
+           + "\n#else\n" + body + "\n#endif  // __SWITCH__\n" + src[j - 1:])
+    open(path, "w").write(out)
+    print(f"  [ok]   {path} ({signature.strip()[:40]})")
+
+
+
 def patch_strerror(path):
     src = open(path).read()
     if "__SWITCH__" in src:
@@ -128,5 +151,16 @@ def patch_strerror(path):
 patch_strerror("base/allocator/partition_allocator/src/partition_alloc/"
                "partition_alloc_base/posix/safe_strerror.cc")
 patch_strerror("base/posix/safe_strerror.cc")
+
+# 5) absl's failure_signal_handler installs a SA_SIGINFO handler through
+#    act.sa_sigaction, a member newlib's struct sigaction does not have (that
+#    union only exists in newlib's RTEMS build). Horizon has no useful POSIX
+#    crash-signal path anyway, so make the installer a no-op on Switch.
+patch_function_body(
+    "third_party/abseil-cpp/absl/debugging/failure_signal_handler.cc",
+    ("static void InstallOneFailureHandler(FailureSignalData* data,\n"
+     "                                     void (*handler)(int, siginfo_t*, void*)) {"),
+    "  (void)data;\n  (void)handler;\n",
+    "#if defined(__SWITCH__)\n  (void)data;\n  (void)handler;")
 
 print("all chromium patches applied")
