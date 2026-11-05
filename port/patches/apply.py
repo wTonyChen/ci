@@ -324,4 +324,12 @@ patch(CCTZ,
       "#elif defined(tm_zone)",
       "inline const char* tm_zone(const std::tm&)")
 
+# 16) Cobalt's socket wrapper uses sockaddr_in/sockaddr_in6 and htonl but only
+#     includes <net/if.h>. devkitA64 has no network headers at all (they come
+#     from libnx), so make the two it needs explicit.
+patch("starboard/shared/modular/starboard_layer_posix_socket_abi_wrappers.cc",
+      "#include <net/if.h>\n",
+      "#include <net/if.h>\n#include <netinet/in.h>\n#include <arpa/inet.h>\n",
+      "#include <netinet/in.h>")
+
 print("all port patches applied")
