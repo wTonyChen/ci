@@ -239,6 +239,10 @@ int setpriority(int which, int who, int prio);
 // Linux resource limits (newlib has none) and POSIX scheduling extensions that
 // newlib omits. Cobalt's modular ABI wrappers reference the whole family, so
 // define it in one go rather than one error at a time.
+#ifndef NZERO
+// Default nice value offset (<limits.h> on Linux).
+#define NZERO 20
+#endif
 #ifndef RLIMIT_CPU
 #define RLIMIT_CPU 0
 #define RLIMIT_FSIZE 1
