@@ -15,9 +15,9 @@
 
 // HOST CLANG: inert. Rust bindgen is invoked with the *target* cflags, so it
 // also gets `-include switch_compat.h`; none of the newlib-facing declarations
-// below make sense there (and some of their types do not even exist).
-// The whole body is therefore GCC-only.
-#if defined(__clang__)
+// below make sense on the x86_64 host. The target compiler is clang too (plan
+// A), so discriminate by architecture: only aarch64 sees the body.
+#if defined(__clang__) && !defined(__aarch64__)
 
 #else  // !__clang__
 
