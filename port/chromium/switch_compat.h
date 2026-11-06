@@ -395,6 +395,25 @@ static inline int clone(int (*fn)(void*), void* child_stack, int flags,
 #define SI_KERNEL 0x80
 #endif
 
+// glibc's ppoll(); Horizon has no poll with a signal mask. Stub out to ENOSYS.
+#include <poll.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+static inline int ppoll(struct pollfd* fds, nfds_t nfds,
+                        const struct timespec* timeout,
+                        const void* sigmask) {
+  (void)fds;
+  (void)nfds;
+  (void)timeout;
+  (void)sigmask;
+  errno = ENOSYS;
+  return -1;
+}
+#ifdef __cplusplus
+}
+#endif
+
 // Dynamic cpu_set_t helpers (glibc-specific): our cpu_set_t is a fixed 64-bit
 // mask, so the "alloc" family just maps onto it.
 #ifndef CPU_COUNT
