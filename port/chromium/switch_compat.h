@@ -414,6 +414,21 @@ static inline int ppoll(struct pollfd* fds, nfds_t nfds,
 }
 #endif
 
+// Linux file-sealing fcntl commands (base/memory/platform_shared_memory_region).
+#ifndef F_ADD_SEALS
+#define F_ADD_SEALS 1033
+#define F_GET_SEALS 1034
+#define F_SEAL_SEAL 0x0001
+#define F_SEAL_SHRINK 0x0002
+#define F_SEAL_GROW 0x0004
+#define F_SEAL_WRITE 0x0008
+#define F_SEAL_FUTURE_WRITE 0x0010
+#endif
+// POLLRDHUP is a Linux extension; newlib/libnx's <poll.h> omits it.
+#ifndef POLLRDHUP
+#define POLLRDHUP 0x2000
+#endif
+
 // Dynamic cpu_set_t helpers (glibc-specific): our cpu_set_t is a fixed 64-bit
 // mask, so the "alloc" family just maps onto it.
 #ifndef CPU_COUNT
