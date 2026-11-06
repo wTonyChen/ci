@@ -6,6 +6,26 @@
 
 // POSIX <limits.h> extras that newlib does not expose (symbolize.cc uses it).
 #include <limits.h>
+// Linux large-file / BSD compatibility names that newlib does not define.
+// aarch64's off_t is already 64-bit, so the *64 variants are plain aliases.
+#ifndef O_NDELAY
+#define O_NDELAY O_NONBLOCK
+#endif
+#ifndef ftruncate64
+#define ftruncate64 ftruncate
+#endif
+#ifndef lseek64
+#define lseek64 lseek
+#endif
+#ifndef stat64
+#define stat64 stat
+#endif
+#ifndef fstat64
+#define fstat64 fstat
+#endif
+#ifndef open64
+#define open64 open
+#endif
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 16384
 #endif
