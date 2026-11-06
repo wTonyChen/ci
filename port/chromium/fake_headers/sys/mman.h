@@ -61,6 +61,16 @@
 #define MADV_DONTNEED 4
 #endif
 
+#ifndef MS_ASYNC
+#define MS_ASYNC 1
+#endif
+#ifndef MS_INVALIDATE
+#define MS_INVALIDATE 2
+#endif
+#ifndef MS_SYNC
+#define MS_SYNC 4
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -69,6 +79,14 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 int munmap(void* addr, size_t length);
 int mprotect(void* addr, size_t length, int prot);
 int madvise(void* addr, size_t length, int advice);
+
+// Horizon memory is ordinary RAM: msync has nothing to flush.
+static inline int msync(void* addr, size_t length, int flags) {
+  (void)addr;
+  (void)length;
+  (void)flags;
+  return 0;
+}
 
 #ifdef __cplusplus
 }
