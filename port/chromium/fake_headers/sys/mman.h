@@ -108,6 +108,15 @@ int madvise(void* addr, size_t length, int advice);
 
 // Horizon has no memfd/mkshared; shared-memory regions fall back to anonymous
 // memory, so this always fails with ENOSYS.
+// Page-residency query: not available on Horizon (returns ENOSYS).
+static inline int mincore(void* addr, size_t length, unsigned char* vec) {
+  (void)addr;
+  (void)length;
+  (void)vec;
+  errno = ENOSYS;
+  return -1;
+}
+
 static inline int memfd_create(const char* name, unsigned int flags) {
   (void)name;
   (void)flags;
