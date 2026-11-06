@@ -5,6 +5,15 @@
 #ifndef FAKE_DLFCN_H_
 #define FAKE_DLFCN_H_
 
+// glibc's <dlfcn.h> also declares Dl_info + dladdr(), used by
+// base/profiler/module_cache_posix.cc.
+typedef struct {
+  const char* dli_fname;
+  void* dli_fbase;
+  const char* dli_sname;
+  void* dli_saddr;
+} Dl_info;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
