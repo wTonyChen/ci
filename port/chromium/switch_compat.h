@@ -275,6 +275,40 @@ typedef struct {
 #define CPU_ISSET(cpu, set) (((set)->__bits[(cpu) / 64] >> ((cpu) % 64)) & 1UL)
 #endif
 
+// Dynamic cpu_set_t helpers (glibc-specific): our cpu_set_t is a fixed 64-bit
+// mask, so the "alloc" family just maps onto it.
+#ifndef CPU_COUNT
+static inline int nx_cpu_count(const cpu_set_t* set) {
+  int n = 0;
+  for (int i = 0; i < (NX_CPU_SETSIZE + 63) / 64; ++i) {
+    n += __builtin_popcountl(set->__bits[i]);
+  }
+  return n;
+}
+#define CPU_COUNT(set) nx_cpu_count(set)
+#endif
+#ifndef CPU_ALLOC_SIZE
+#define CPU_ALLOC_SIZE(count) ((size_t)sizeof(cpu_set_t))
+#endif
+#ifndef CPU_ALLOC
+#define CPU_ALLOC(count) ((cpu_set_t*)calloc(1, sizeof(cpu_set_t)))
+#endif
+#ifndef CPU_FREE
+#define CPU_FREE(set) free(set)
+#endif
+#ifndef CPU_COUNT_S
+#define CPU_COUNT_S(setsize, set) CPU_COUNT(set)
+#endif
+
+// Linux SCM credentials (base/posix/unix_domain_socket.cc). AF_UNIX is inert on
+// Horizon but the constants have to exist.
+#ifndef SO_PASSCRED
+#define SO_PASSCRED 16
+#endif
+#ifndef SCM_CREDENTIALS
+#define SCM_CREDENTIALS 2
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
