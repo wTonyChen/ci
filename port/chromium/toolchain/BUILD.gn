@@ -1,40 +1,43 @@
-# Nintendo Switch (devkitA64) toolchain for the Chromium build.
+# Nintendo Switch toolchain for the Chromium build (clang flavour).
 #
-# Chromium's own build/ already supports custom_toolchain + gcc_toolchain, so
-# this is deliberately tiny: point it at the devkitA64 binaries and flip the
-# clang-only buildargs inside this toolchain's scope (the host toolchain keeps
-# clang + libc++, which Chromium's bundled libc++ requires).
+# Plan A (2026-11-06): the target compiler is Chromium's own clang from
+# //third_party/llvm-build, not devkitA64's GCC. Chromium is a clang-only
+# codebase (e.g. flat_tree.h deduces through an alias template, which GCC
+# refuses), so fighting it with GCC means patching //base forever.
+#
+# Headers/libraries still come from devkitA64 (newlib + libnx); the CI workflow
+# symlinks /opt/devkitpro/devkitA64 and /opt/devkitpro/libnx into third_party/.
 
 import("//build/toolchain/gcc_toolchain.gni")
 
 gcc_toolchain("devkita64") {
-  # Must live INSIDE the source tree (ninja cannot depend on a tool outside the
-  # checkout) AND be rebased to a path relative to the build dir — a literal
-  # "//..." string is not a runnable path. The CI workflow symlinks
-  # /opt/devkitpro/devkitA64 to //third_party/devkitA64.
-  _prefix = rebase_path("//third_party/devkitA64/bin", root_build_dir)
-  _bin = "${_prefix}/aarch64-none-elf-"
+  # Both live INSIDE the source tree (ninja cannot depend on a tool outside the
+  # checkout) and must be rebased: a literal "//..." is not a runnable path.
+  _clang_prefix = rebase_path("//third_party/llvm-build/Release+Asserts/bin",
+                              root_build_dir)
+  _ar = rebase_path("//third_party/devkitA64/bin/aarch64-none-elf-ar",
+                    root_build_dir)
 
-  cc = "${_bin}gcc"
-  cxx = "${_bin}g++"
-  ar = "${_bin}ar"
+  cc = "${_clang_prefix}/clang"
+  cxx = "${_clang_prefix}/clang++"
+  ar = _ar
   ld = cxx
-  readelf = "${_bin}readelf"
-  nm = "${_bin}nm"
+  readelf = "${_ar}c"  # unused by the build; kept to satisfy the template
+  nm = "${_ar}c"
 
   toolchain_args = {
     current_cpu = "arm64"
     current_os = "linux"
 
-    # GCC identity. These are read by //build/config/* inside this toolchain.
-    # NOTE: for the DEFAULT toolchain these are ignored by GN; the real values
-    # live in args.gn. Kept here for the day this toolchain becomes non-default.
-    is_clang = false
-    use_thin_lto = false
+    is_clang = true
+    use_lld = true
+
+    # Target uses devkitA64's libstdc++ (Chromium's libc++ needs a platform
+    # layer we do not have on Horizon yet).
     use_custom_libcxx = false
     clang_use_chrome_plugins = false
+    use_thin_lto = false
 
-    # No remote execution / reclient for a homebrew cross build.
     use_remoteexec = false
     use_reclient = false
   }
