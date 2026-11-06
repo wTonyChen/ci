@@ -229,4 +229,16 @@ patch("base/debug/stack_trace_posix.cc",
       "#endif\n",
       "newlib's siginfo_t has no si_addr")
 
+# 9) newlib's struct tm has no tm_gmtoff/tm_zone (glibc extensions). Chromium only
+#    sets them to 0/nullptr because "mktime/timegm ignore" them, so dropping the
+#    two assignments on Switch changes nothing.
+patch("base/time/time_exploded_posix.cc",
+      "  timestruct.tm_gmtoff = 0;      // not a POSIX field, so mktime/timegm ignore\n"
+      "  timestruct.tm_zone = nullptr;  // not a POSIX field, so mktime/timegm ignore\n",
+      "#if !defined(__SWITCH__)\n"
+      "  timestruct.tm_gmtoff = 0;      // not a POSIX field, so mktime/timegm ignore\n"
+      "  timestruct.tm_zone = nullptr;  // not a POSIX field, so mktime/timegm ignore\n"
+      "#endif  // !__SWITCH__ (newlib struct tm has neither field)\n",
+      "newlib struct tm has neither field")
+
 print("all chromium patches applied")
