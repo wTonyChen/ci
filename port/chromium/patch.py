@@ -19,8 +19,9 @@ def patch(path, old, new, marker):
 
 
 # 1) Wire //:switch_config into the default config list of every *target*
-#    toolchain. Guarded with !is_clang so the host (clang_x64) toolchain keeps
-#    its own configs and never sees __SWITCH__/fake POSIX headers.
+#    toolchain. Guarded with current_cpu so the host (x64) toolchain keeps its
+#    own configs and never sees __SWITCH__/fake POSIX headers. (`is_clang` can
+#    no longer discriminate: plan A made the target clang as well.)
 # NOTE: `if` entries inside a list literal are NOT accepted by Chromium's gn
 # ("Unexpected token 'if'"), so append after the list instead.
 patch("build/config/BUILDCONFIG.gn",
@@ -28,9 +29,9 @@ patch("build/config/BUILDCONFIG.gn",
       '  "//build/config:feature_flags",\n]\n'
       '\n'
       '# Chromium-NX: Switch target configs (defines, fake POSIX headers,\n'
-      '# force-included compat header). Guarded so the host toolchain, which runs\n'
-      '# with is_clang=true, never sees them.\n'
-      'if (!is_clang) {\n'
+      '# force-included compat header). Guarded by current_cpu so the x64 host\n'
+      '# toolchain never sees them (both toolchains are clang now).\n'
+      'if (current_cpu == "arm64") {\n'
       '  default_compiler_configs += [ "//:switch_config" ]\n'
       '}\n',
       "//:switch_config")
