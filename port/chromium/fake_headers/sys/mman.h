@@ -89,6 +89,13 @@
 #define MADV_HWPOISON 100
 #define MADV_SOFT_OFFLINE 101
 #endif
+// memfd_create(2) constants live in <sys/mman.h> on glibc.
+#ifndef MFD_CLOEXEC
+#define MFD_CLOEXEC 0x0001U
+#endif
+#ifndef MFD_ALLOW_SEALING
+#define MFD_ALLOW_SEALING 0x0002U
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
