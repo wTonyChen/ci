@@ -93,6 +93,34 @@ struct inotify_event {
 };
 #endif
 
+#ifndef IN_MOVE
+/* Both move events: the uapi header defines this convenience constant. */
+#define IN_MOVE (IN_MOVED_FROM | IN_MOVED_TO)
+#endif
+#ifndef IN_ALL_EVENTS
+#define IN_ALL_EVENTS 0x00000fff
+#endif
+#ifndef IN_ONLYDIR
+#define IN_ONLYDIR 0x01000000
+#endif
+#ifndef IN_DONT_FOLLOW
+#define IN_DONT_FOLLOW 0x02000000
+#endif
+#ifndef IN_EXCL_UNLINK
+#define IN_EXCL_UNLINK 0x04000000
+#endif
+#ifndef IN_MASK_CREATE
+#define IN_MASK_CREATE 0x10000000
+#endif
+#ifndef IN_MASK_ADD
+#define IN_MASK_ADD 0x20000000
+#endif
+#ifndef IN_ISDIR
+#define IN_ISDIR 0x40000000
+#endif
+#ifndef IN_ONESHOT
+#define IN_ONESHOT 0x80000000
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
