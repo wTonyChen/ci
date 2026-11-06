@@ -7,6 +7,7 @@
 #define FAKE_SYS_MMAN_H_
 
 #include <stddef.h>
+#include <errno.h>
 #include <sys/types.h>
 
 #ifndef PROT_NONE
@@ -104,6 +105,16 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 int munmap(void* addr, size_t length);
 int mprotect(void* addr, size_t length, int prot);
 int madvise(void* addr, size_t length, int advice);
+
+// Horizon has no memfd/mkshared; shared-memory regions fall back to anonymous
+// memory, so this always fails with ENOSYS.
+static inline int memfd_create(const char* name, unsigned int flags) {
+  (void)name;
+  (void)flags;
+  errno = ENOSYS;
+  return -1;
+}
+
 
 // Horizon memory is ordinary RAM: msync has nothing to flush.
 static inline int msync(void* addr, size_t length, int flags) {
