@@ -164,4 +164,18 @@ patch_function_body(
     "  (void)data;\n  (void)handler;\n",
     "#if defined(__SWITCH__)\n  (void)data;\n  (void)handler;")
 
+# 6) base/profiler/stack_copier_signal.cc installs a SA_SIGINFO handler through
+#    act.sa_sigaction, which newlib's struct sigaction does not have (absl got the
+#    same treatment above). Horizon has no process-directed signals, so bail out
+#    before touching the sigaction at all.
+patch("base/profiler/stack_copier_signal.cc",
+      "    action.sa_sigaction = CopyStackSignalHandler;\n",
+      "#if defined(__SWITCH__)\n"
+      "    // No SA_SIGINFO / thread-directed signals on Horizon.\n"
+      "    return false;\n"
+      "#else\n"
+      "    action.sa_sigaction = CopyStackSignalHandler;\n"
+      "#endif\n",
+      "No SA_SIGINFO / thread-directed signals on Horizon")
+
 print("all chromium patches applied")
