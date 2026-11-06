@@ -46,6 +46,21 @@
 
 #else  // aarch64 target (any compiler)
 
+// newlib hides several POSIX thread APIs behind feature-test macros. Chromium's
+// base/synchronization/lock_impl_posix.cc uses the mutex protocol API
+// (PTHREAD_PRIO_INHERIT) inside DCHECK, and base/threading uses mutex types.
+// Enabling them here (before <pthread.h> is pulled in) makes newlib declare them.
+#ifndef _POSIX_THREAD_PRIO_INHERIT
+#define _POSIX_THREAD_PRIO_INHERIT 1
+#endif
+#ifndef _POSIX_THREAD_PRIO_PROTECT
+#define _POSIX_THREAD_PRIO_PROTECT 1
+#endif
+#ifndef _UNIX98_THREAD_MUTEX_ATTRIBUTES
+#define _UNIX98_THREAD_MUTEX_ATTRIBUTES 1
+#endif
+
+
 // Linux SO_PEERCRED / struct ucred (perfetto's unix_socket.cc). glibc puts
 // these in <sys/socket.h>; newlib/libnx have neither.
 #include <sys/types.h>
