@@ -50,6 +50,17 @@
 // base/synchronization/lock_impl_posix.cc uses the mutex protocol API
 // (PTHREAD_PRIO_INHERIT) inside DCHECK, and base/threading uses mutex types.
 // Enabling them here (before <pthread.h> is pulled in) makes newlib declare them.
+// Chromium sources rely on libc++ transitive includes (e.g. proc_maps_linux.cc
+// calls strlen() after only including <string>). The devkitA64 libstdc++ headers
+// do not pull the C headers transitively, so force in the ones Chromium assumes.
+#include <string.h>
+#include <strings.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #ifndef _POSIX_THREAD_PRIO_INHERIT
 #define _POSIX_THREAD_PRIO_INHERIT 1
 #endif
