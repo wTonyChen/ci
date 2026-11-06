@@ -18,12 +18,9 @@ dcheck_always_on = false
 use_sysroot = false
 use_custom_libcxx_for_host = true
 
-# These MUST be global (args.gn): our devkitA64 toolchain is the DEFAULT
-# toolchain, and GN ignores `toolchain_args` for the default toolchain
-# (see gcc_toolchain.gni: "ignored when this is the default toolchain").
-# The host toolchain is non-default, so its own toolchain_args (is_clang=true)
-# still win there — that is why the host keeps clang + libc++.
-is_clang = false
+# Plan A: the target toolchain is clang too now. These stay global because our
+# devkitA64 toolchain is the DEFAULT toolchain and GN ignores `toolchain_args`
+# for it (see gcc_toolchain.gni: "ignored when this is the default toolchain").
 use_custom_libcxx = false
 use_thin_lto = false
 clang_use_chrome_plugins = false
