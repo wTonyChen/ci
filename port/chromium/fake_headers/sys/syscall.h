@@ -20,6 +20,9 @@
 #define SYS_sched_getaffinity 123
 #define SYS_rt_sigprocmask 135
 #define SYS_tgkill 131
+#define SYS_rt_tgsigqueueinfo 240
+#define SYS_pidfd_open 434
+#define SYS_pidfd_send_signal 424
 #define SYS_getpid 172
 #define SYS_gettid 178
 #define SYS_munmap 215
@@ -47,6 +50,9 @@
 #define __NR_sched_getaffinity 123
 #define __NR_rt_sigprocmask 135
 #define __NR_tgkill 131
+#define __NR_rt_tgsigqueueinfo 240
+#define __NR_pidfd_open 434
+#define __NR_pidfd_send_signal 424
 #define __NR_getpid 172
 #define __NR_gettid 178
 #define __NR_munmap 215
