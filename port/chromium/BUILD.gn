@@ -56,8 +56,51 @@ config("switch_config") {
   cflags_cc = cflags
 }
 
+
+# ---------------------------------------------------------------------------
+# M3: link a minimal executable against libbase.a + newlib + libnx.
+#
+# Chromium's normal Linux link config is not usable here (PIE, dynamic linker,
+# crt1), so the target gets its own linker config and skips the default configs:
+# libnx's switch.ld supplies the memory layout and the entry point (_start).
+# ---------------------------------------------------------------------------
+config("nx_link") {
+  _devkita64 = rebase_path("//third_party/devkitA64/aarch64-none-elf",
+                           root_build_dir)
+  _libnx = rebase_path("//third_party/libnx", root_build_dir)
+
+  ldflags = [
+    "-nostdlib",
+    "-no-pie",
+    "-Wl,-T",
+    "${_libnx}/switch.ld",
+    "-L",
+    "${_devkita64}/lib",
+    "-L",
+    "${_libnx}/lib",
+    "-Wl,--gc-sections",
+    "-Wl,--start-group",
+    "${_devkita64}/lib/libc.a",
+    "${_devkita64}/lib/libm.a",
+    "${_devkita64}/lib/libstdc++.a",
+    "${_devkita64}/lib/libsupc++.a",
+    "${_libnx}/lib/libnx.a",
+    "-Wl,--end-group",
+  ]
+}
+
+executable("nx_smoke") {
+  sources = [ "//port/chromium/smoke_main.cc" ]
+  deps = [ "//base" ]
+  configs = [ ":nx_link" ]
+}
+
 group("gn_all") {
   deps = [ "//base:base" ]
+}
+
+group("smoke") {
+  deps = [ ":nx_smoke" ]
 }
 
 group("all") {
