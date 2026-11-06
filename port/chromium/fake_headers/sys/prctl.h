@@ -5,6 +5,10 @@
 #ifndef FAKE_SYS_PRCTL_H_
 #define FAKE_SYS_PRCTL_H_
 
+// The full PR_* table lives in our <linux/prctl.h>; glibc puts it in
+// <sys/prctl.h>, so forward it here too.
+#include <linux/prctl.h>
+
 #ifndef PR_SET_NAME
 #define PR_SET_NAME 15
 #endif
