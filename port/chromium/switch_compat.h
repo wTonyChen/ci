@@ -5,9 +5,7 @@
 #define SWITCH_COMPAT_H_
 
 // POSIX <limits.h> extras that newlib does not expose (symbolize.cc uses it).
-#if !defined(__clang__)
 #include <limits.h>
-#endif
 #ifndef SSIZE_MAX
 #define SSIZE_MAX ((ssize_t)(SIZE_MAX >> 1))
 #endif
@@ -18,14 +16,16 @@
 // below make sense on the x86_64 host. The target compiler is clang too (plan
 // A), so discriminate by architecture: only aarch64 sees the body.
 #if defined(__clang__) && !defined(__aarch64__)
+#define NX_HOST_CLANG 1
+#endif
 
-#else  // !__clang__
+#if defined(NX_HOST_CLANG)
+
+#else  // aarch64 target (any compiler)
 
 // Linux SO_PEERCRED / struct ucred (perfetto's unix_socket.cc). glibc puts
 // these in <sys/socket.h>; newlib/libnx have neither.
-#if !defined(__clang__)
 #include <sys/types.h>
-#endif
 #ifndef SO_PEERCRED
 #define SO_PEERCRED 17
 #endif
@@ -79,17 +79,13 @@ struct ucred {
 // newlib has no timegm(); the definition lives in shims/posix_shim.cc. This
 // header is force-included into every target C++ compile (GN_CXX_FLAGS
 // -include), so the declaration is visible where perfetto needs it.
-#if !defined(__clang__)
 // Host clang (Rust bindgen) also receives this -include; it must not pull
 // newlib/devkitA64 headers, so only the real GCC target includes anything.
 #include <time.h>
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if !defined(__clang__)
 time_t timegm(struct tm* tm);
-#endif
 #ifdef __cplusplus
 }
 #endif
@@ -128,10 +124,8 @@ int* __errno_location(void);
 // newlib's pthread is a stub: no scopes / scheduling policy / getattr_np.
 // Cobalt's modular pthread ABI wrappers call these glibc/POSIX extensions, so
 // declare them here and let shims/posix_shim.cc answer ENOSYS.
-#if !defined(__clang__)
 #include <pthread.h>
 #include <sched.h>
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
