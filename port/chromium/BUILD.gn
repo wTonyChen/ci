@@ -26,15 +26,31 @@ config("switch_config") {
     "//third_party/libnx/include",
   ]
 
-  _compat = rebase_path("//port/chromium/switch_compat.h", root_build_dir)
+  # clang needs an explicit target triple and the devkitA64 sysroot-ish paths;
+  # it also has to be pointed at libstdc++'s C++ headers (Chromium does this
+  # through its own libc++ normally).
+  _devkita64 = rebase_path("//third_party/devkitA64/aarch64-none-elf",
+                           root_build_dir)
   cflags = [
+    "--target=aarch64-none-elf",
+    "-isystem",
+    "${_devkita64}/include",
+    "-isystem",
+    "${_devkita64}/include/c++/15.2.0",
+    "-isystem",
+    "${_devkita64}/include/c++/15.2.0/aarch64-none-elf",
+    "-isystem",
+    "${_devkita64}/include/c++/15.2.0/backward",
+    "-L",
+    "${_devkita64}/lib",
+  ]
+
+  _compat = rebase_path("//port/chromium/switch_compat.h", root_build_dir)
+  cflags += [
     "-include",
     _compat,
   ]
-  cflags_cc = [
-    "-include",
-    _compat,
-  ]
+  cflags_cc = cflags
 }
 
 group("gn_all") {
