@@ -349,6 +349,52 @@ static inline int clone(int (*fn)(void*), void* child_stack, int flags,
 }
 #endif
 
+// Linux si_code values (base/debug/stack_trace_posix.cc prints them). newlib has
+// only a couple; provide the standard set.
+#ifndef BUS_ADRALN
+#define BUS_ADRALN 1
+#define BUS_ADRERR 2
+#define BUS_OBJERR 3
+#define BUS_MCEERR_AR 4
+#define BUS_MCEERR_AO 5
+#endif
+#ifndef FPE_INTDIV
+#define FPE_INTDIV 1
+#define FPE_INTOVF 2
+#define FPE_FLTDIV 3
+#define FPE_FLTOVF 4
+#define FPE_FLTUND 5
+#define FPE_FLTRES 6
+#define FPE_FLTINV 7
+#define FPE_FLTSUB 8
+#endif
+#ifndef ILL_ILLOPC
+#define ILL_ILLOPC 1
+#define ILL_ILLOPN 2
+#define ILL_ILLADR 3
+#define ILL_ILLTRP 4
+#define ILL_PRVOPC 5
+#define ILL_PRVREG 6
+#define ILL_COPROC 7
+#define ILL_BADSTK 8
+#endif
+#ifndef SEGV_MAPERR
+#define SEGV_MAPERR 1
+#define SEGV_ACCERR 2
+#define SEGV_BNDERR 3
+#define SEGV_PKUERR 4
+#endif
+#ifndef TRAP_BRKPT
+#define TRAP_BRKPT 1
+#define TRAP_TRACE 2
+#define TRAP_BRANCH 3
+#define TRAP_HWBKPT 4
+#endif
+#ifndef SI_USER
+#define SI_USER 0
+#define SI_KERNEL 0x80
+#endif
+
 // Dynamic cpu_set_t helpers (glibc-specific): our cpu_set_t is a fixed 64-bit
 // mask, so the "alloc" family just maps onto it.
 #ifndef CPU_COUNT
