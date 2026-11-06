@@ -88,7 +88,7 @@ jobs:
           cd "$WORK/src"
           [ -d out/switch ] || { echo "no out/switch (gn gen failed)"; exit 0; }
           set +e
-          timeout 3000 ninja -C out/switch -j4 base > /tmp/ninja.log 2>&1
+          timeout 3000 ninja -C out/switch -j4 base nx_smoke > /tmp/ninja.log 2>&1
           rc=$?
           echo "=== ninja base rc=$rc ==="
           grep -aE 'FAILED|fatal error|error:|undefined reference' /tmp/ninja.log \
