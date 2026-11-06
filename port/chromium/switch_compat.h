@@ -6,6 +6,9 @@
 
 // POSIX <limits.h> extras that newlib does not expose (symbolize.cc uses it).
 #include <limits.h>
+#ifndef PTHREAD_STACK_MIN
+#define PTHREAD_STACK_MIN 16384
+#endif
 #ifndef SSIZE_MAX
 #define SSIZE_MAX ((ssize_t)(SIZE_MAX >> 1))
 #endif
