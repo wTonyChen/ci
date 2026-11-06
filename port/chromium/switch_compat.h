@@ -318,6 +318,37 @@ static inline int posix_fadvise(int fd, off_t offset, off_t len, int advice) {
 }
 #endif
 
+// Linux clone(2) flags and prototype (base/process/launch_posix.cc). There is no
+// fork/exec on Horizon, so the implementation is a stub that always fails.
+#ifndef CLONE_VM
+#define CLONE_VM 0x00000100
+#define CLONE_FS 0x00000200
+#define CLONE_FILES 0x00000400
+#define CLONE_SIGHAND 0x00000800
+#define CLONE_THREAD 0x00010000
+#define CLONE_SYSVSEM 0x00040000
+#define CLONE_SETTLS 0x00080000
+#define CLONE_PARENT_SETTID 0x00100000
+#define CLONE_CHILD_CLEARTID 0x00200000
+#define CLONE_CHILD_SETTID 0x01000000
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+static inline int clone(int (*fn)(void*), void* child_stack, int flags,
+                        void* arg, ...) {
+  (void)fn;
+  (void)child_stack;
+  (void)flags;
+  (void)arg;
+  errno = ENOSYS;
+  return -1;
+}
+#ifdef __cplusplus
+}
+#endif
+
 // Dynamic cpu_set_t helpers (glibc-specific): our cpu_set_t is a fixed 64-bit
 // mask, so the "alloc" family just maps onto it.
 #ifndef CPU_COUNT
