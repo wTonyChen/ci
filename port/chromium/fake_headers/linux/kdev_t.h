@@ -6,4 +6,16 @@
 
 #include <sys/sysmacros.h>
 
+/* Kernel spelling of the same helpers (base/files/drive_info_posix.cc uses
+   MAJOR()/MINOR(), which come from <linux/kdev_t.h> on Linux). */
+#ifndef MAJOR
+#define MAJOR(dev) gnu_dev_major(dev)
+#endif
+#ifndef MINOR
+#define MINOR(dev) gnu_dev_minor(dev)
+#endif
+#ifndef MKDEV
+#define MKDEV(major, minor) gnu_dev_makedev(major, minor)
+#endif
+
 #endif  // FAKE_LINUX_KDEV_T_H_
