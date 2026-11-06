@@ -217,4 +217,16 @@ def patch_sa_sigaction(path):
 
 patch_sa_sigaction(STACK_TRACE)
 
+# 8) newlib's siginfo_t has only si_signo/si_code/si_value — no si_addr (nor the
+#    rest of the glibc union). stack_trace_posix.cc prints the fault address.
+patch("base/debug/stack_trace_posix.cc",
+      "    internal::itoa_r(reinterpret_cast<intptr_t>(info->si_addr), 16, 12, buf);\n",
+      "#if defined(__SWITCH__)\n"
+      "    // newlib's siginfo_t has no si_addr.\n"
+      "    internal::itoa_r(0, 16, 12, buf);\n"
+      "#else\n"
+      "    internal::itoa_r(reinterpret_cast<intptr_t>(info->si_addr), 16, 12, buf);\n"
+      "#endif\n",
+      "newlib's siginfo_t has no si_addr")
+
 print("all chromium patches applied")
