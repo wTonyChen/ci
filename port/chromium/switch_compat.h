@@ -307,12 +307,12 @@ int clock_nanosleep(clockid_t clock_id, int flags,
 #define CLOCK_BOOTTIME_ALARM 9
 #endif
 // glibc exports these from <errno.h>; base/process/set_process_title.cc uses
-// them. A per-TU static copy is enough for the port (nothing reads them across
-// translation units on Switch).
+// them AND assigns to them, so they must be char* (assignable), not arrays.
+// A per-TU static is enough for the port: nothing reads them across TUs.
 static char program_invocation_short_name_storage[] = "chromium";
 static char program_invocation_name_storage[] = "chromium";
-#define program_invocation_short_name (program_invocation_short_name_storage)
-#define program_invocation_name (program_invocation_name_storage)
+static char* program_invocation_short_name = program_invocation_short_name_storage;
+static char* program_invocation_name = program_invocation_name_storage;
 
 #endif  // !__clang__
 #endif  // SWITCH_COMPAT_H_
