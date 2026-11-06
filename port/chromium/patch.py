@@ -178,4 +178,43 @@ patch("base/profiler/stack_copier_signal.cc",
       "#endif\n",
       "No SA_SIGINFO / thread-directed signals on Horizon")
 
+# 7) newlib's struct sigaction has no sa_sigaction member (that union only exists
+#    in newlib's RTEMS build). base/debug/stack_trace_posix.cc assigns to it in
+#    three places and compares it in one. On Horizon the crash-dump handler
+#    cannot be installed anyway, so drop those statements.
+STACK_TRACE = "base/debug/stack_trace_posix.cc"
+
+
+def patch_sa_sigaction(path):
+    src = open(path).read()
+    if "// __SWITCH__: newlib has no sa_sigaction" in src:
+        print(f"  [skip] {path} already patched")
+        return
+    lines = src.split("\n")
+    out = []
+    for line in lines:
+        stripped = line.strip()
+        if re.match(r"^[A-Za-z_][A-Za-z0-9_]*\\.sa_sigaction\\s*=", stripped) or \
+           stripped.startswith("action.sa_sigaction ="):
+            indent = line[: len(line) - len(line.lstrip())]
+            out.append(f"{indent}// __SWITCH__: newlib has no sa_sigaction")
+            out.append(f"{indent}#if !defined(__SWITCH__)")
+            out.append(line)
+            out.append(f"{indent}#endif")
+        elif "installed_handler.sa_sigaction != StackDumpSignalHandler" in line:
+            indent = line[: len(line) - len(line.lstrip())]
+            out.append(f"{indent}// __SWITCH__: newlib has no sa_sigaction")
+            out.append(f"{indent}#if defined(__SWITCH__)")
+            out.append(f"{indent}(void)0;")
+            out.append(f"{indent}#else")
+            out.append(line)
+            out.append(f"{indent}#endif")
+        else:
+            out.append(line)
+    open(path, "w").write("\n".join(out))
+    print(f"  [ok]   {path} (sa_sigaction)")
+
+
+patch_sa_sigaction(STACK_TRACE)
+
 print("all chromium patches applied")
