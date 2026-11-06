@@ -206,6 +206,7 @@ int pthread_setschedparam(pthread_t thread, int policy,
 #ifndef NX_RLIMIT_DEFINED
 #define NX_RLIMIT_DEFINED
 typedef unsigned long nx_rlim_t;
+typedef nx_rlim_t rlim_t;
 struct rlimit {
   nx_rlim_t rlim_cur;
   nx_rlim_t rlim_max;
@@ -273,6 +274,44 @@ typedef struct {
 #define CPU_SET(cpu, set) ((set)->__bits[(cpu) / 64] |= (1UL << ((cpu) % 64)))
 #define CPU_CLR(cpu, set) ((set)->__bits[(cpu) / 64] &= ~(1UL << ((cpu) % 64)))
 #define CPU_ISSET(cpu, set) (((set)->__bits[(cpu) / 64] >> ((cpu) % 64)) & 1UL)
+#endif
+
+// Linux file-preallocation and fadvise extensions used by base/files.
+#ifndef FALLOC_FL_KEEP_SIZE
+#define FALLOC_FL_KEEP_SIZE 0x01
+#endif
+#ifndef FALLOC_FL_PUNCH_HOLE
+#define FALLOC_FL_PUNCH_HOLE 0x02
+#endif
+#ifndef POSIX_FADV_NORMAL
+#define POSIX_FADV_NORMAL 0
+#define POSIX_FADV_RANDOM 1
+#define POSIX_FADV_SEQUENTIAL 2
+#define POSIX_FADV_WILLNEED 3
+#define POSIX_FADV_DONTNEED 4
+#define POSIX_FADV_NOREUSE 5
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+static inline int fallocate(int fd, int mode, off_t offset, off_t len) {
+  (void)fd;
+  (void)mode;
+  (void)offset;
+  (void)len;
+  errno = ENOSYS;
+  return -1;
+}
+static inline int posix_fadvise(int fd, off_t offset, off_t len, int advice) {
+  (void)fd;
+  (void)offset;
+  (void)len;
+  (void)advice;
+  return 0;
+}
+#ifdef __cplusplus
+}
 #endif
 
 // Dynamic cpu_set_t helpers (glibc-specific): our cpu_set_t is a fixed 64-bit
