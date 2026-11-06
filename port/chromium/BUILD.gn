@@ -31,16 +31,19 @@ config("switch_config") {
   # through its own libc++ normally).
   _devkita64 = rebase_path("//third_party/devkitA64/aarch64-none-elf",
                            root_build_dir)
+  # ORDER MATTERS: libstdc++ headers must come BEFORE the newlib headers, because
+  # its <cstdlib> etc. use #include_next to reach the C library header — and
+  # #include_next only looks at directories AFTER the current one.
   cflags = [
     "--target=aarch64-none-elf",
-    "-isystem",
-    "${_devkita64}/include",
     "-isystem",
     "${_devkita64}/include/c++/15.2.0",
     "-isystem",
     "${_devkita64}/include/c++/15.2.0/aarch64-none-elf",
     "-isystem",
     "${_devkita64}/include/c++/15.2.0/backward",
+    "-isystem",
+    "${_devkita64}/include",
     "-L",
     "${_devkita64}/lib",
   ]
