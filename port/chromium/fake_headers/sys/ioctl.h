@@ -3,6 +3,9 @@
 #ifndef FAKE_SYS_IOCTL_H_
 #define FAKE_SYS_IOCTL_H_
 
+#ifndef FIONREAD
+#define FIONREAD 0x541B
+#endif
 #ifndef TIOCGWINSZ
 struct winsize {
   unsigned short ws_row;
