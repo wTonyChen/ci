@@ -100,6 +100,10 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
   return n;
 }
 
+int bcmp(const void* s1, const void* s2, size_t n) {
+  return memcmp(s1, s2, n);
+}
+
 ssize_t writev(int fd, const void* iov, int iovcnt) {
   (void)fd;
   (void)iov;
