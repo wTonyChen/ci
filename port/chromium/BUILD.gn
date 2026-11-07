@@ -105,7 +105,12 @@ config("nx_link") {
 }
 
 executable("nx_smoke") {
-  sources = [ "//port/chromium/smoke_main.cc" ]
+  sources = [
+    "//port/chromium/smoke_main.cc",
+    # Horizon POSIX/allocator bring-up layer (ported from the Cobalt port).
+    "//port/chromium/shims/mmap_shim.cc",
+    "//port/chromium/shims/posix_shim.cc",
+  ]
   deps = [ "//base" ]
   # NOTE: `configs = [...]` is rejected ("Replacing nonempty list"); the default
   # configs always arrive first, so append and let the later flags win.
