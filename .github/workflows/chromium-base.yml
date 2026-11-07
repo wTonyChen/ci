@@ -91,6 +91,9 @@ jobs:
           timeout 3000 ninja -C out/switch -j4 base nx_smoke > /tmp/ninja.log 2>&1
           rc=$?
           echo "=== ninja base rc=$rc ==="
+          echo "--- ninja.log tail (link errors live here) ---"
+          tail -n 90 /tmp/ninja.log | sed 's/\x1b\[[0-9;]*m//g'
+          echo "--- end tail ---"
           grep -aE 'FAILED|fatal error|error:|undefined reference' /tmp/ninja.log \
             | sed 's/^\[\?[0-9]*\/[0-9]*\]\? *//' | sort -u | head -25
           tail -15 /tmp/ninja.log
