@@ -65,6 +65,7 @@ jobs:
           echo "--- patching BUILDCONFIG (wire switch_config into default configs) ---"
           cd "$WORK/src" && python3 port/chromium/patch.py
           chmod +x port/chromium/ld_wrapper.py port/chromium/patch.py 2>/dev/null || true
+          sudo install -m 755 port/chromium/ld_wrapper.py /usr/local/bin/nx-ld-wrapper
           echo "--- args.gn ---"
           cat "$WORK/src/port/chromium/args.gn"
 
