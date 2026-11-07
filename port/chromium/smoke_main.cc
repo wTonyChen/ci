@@ -9,13 +9,16 @@
 
 #include <switch.h>
 
-#include "base/time/time.h"
+#include "third_party/zlib/zlib.h"
 
 namespace {
 
 void RunSmokeTest() {
-  const int64_t ms = base::Time::Now().InMillisecondsSinceUnixEpoch();
-  printf("nx_smoke: base::Time::Now() = %lld ms\n", static_cast<long long>(ms));
+  // A real function from Chromium's own zlib, so a successful link proves the
+  // toolchain + archive + libnx/newlib path, without dragging in //base (whose
+  // Rust parts need libunwind, which does not exist for bare-metal aarch64).
+  const uLong crc = crc32(0, Z_NULL, 0);
+  printf("nx_smoke: crc32(empty) = %lu\n", static_cast<unsigned long>(crc));
 }
 
 }  // namespace
