@@ -77,6 +77,9 @@ config("nx_link") {
     # libnx's switch.ld/switch.specs build a PIE with libnx's own _start.
     "-pie",
     "-Wl,--no-dynamic-linker",
+    # devkitA64's newlib/libnx archives were not built with -fPIC, so a PIE link
+    # needs text relocations to be tolerated.
+    "-Wl,-z,notext",
     "-Wl,-T",
     "${_libnx}/switch.ld",
     "-L",
