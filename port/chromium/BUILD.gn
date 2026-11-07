@@ -80,7 +80,7 @@ config("nx_link") {
     # Use devkitA64's GNU ld (bfd) for the final link: it is what devkitPro's own
     # switch.specs flow uses, and unlike lld it accepts the non-PIC newlib
     # archives and the TLS sections in switch.ld.
-    "-fuse-ld=bfd",
+    "-fuse-ld=" + rebase_path("//port/chromium/ld_wrapper.py", root_build_dir),
     # The toolchain triple is aarch64-linux-gnu (Chromium's), which makes clang
     # ask ld.bfd for the "aarch64linux" emulation — devkitA64's ld only knows the
     # bare-metal "aarch64elf" one.
