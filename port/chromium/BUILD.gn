@@ -77,6 +77,11 @@ config("nx_link") {
     # libnx's switch.ld/switch.specs build a PIE with libnx's own _start.
     "-pie",
     "-Wl,--no-dynamic-linker",
+    # Use devkitA64's GNU ld (bfd) for the final link: it is what devkitPro's own
+    # switch.specs flow uses, and unlike lld it accepts the non-PIC newlib
+    # archives and the TLS sections in switch.ld.
+    "-fuse-ld=bfd",
+    "-B${_devkita64}/bin",
     # devkitA64's newlib/libnx archives were not built with -fPIC, so a PIE link
     # needs text relocations to be tolerated.
     "-Wl,-z,notext",
