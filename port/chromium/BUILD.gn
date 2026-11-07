@@ -91,10 +91,15 @@ config("nx_link") {
     "-Wl,--allow-multiple-definition",
     "-Wl,--start-group",
     "${_devkita64}/lib/libc.a",
+    # libsysbase.a is devkitA64's newlib syscall layer (_write_r/_exit/...) and
+    # also carries the newlib pthread implementation.
+    "${_devkita64}/lib/libsysbase.a",
     "${_devkita64}/lib/libm.a",
     "${_devkita64}/lib/libstdc++.a",
     "${_devkita64}/lib/libsupc++.a",
     "${_libnx}/lib/libnx.a",
+    # libgcc.a holds _Unwind_* (C++ unwinder helpers).
+    "${_devkita64}/../lib/gcc/aarch64-none-elf/15.2.0/libgcc.a",
     "-Wl,--end-group",
   ]
 }
