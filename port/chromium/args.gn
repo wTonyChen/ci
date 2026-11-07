@@ -62,3 +62,6 @@ arm_control_flow_integrity = "none"
 
 # V8: JIT is available on Switch (jitCreate), but the sandbox is not.
 v8_enable_sandbox = false
+
+# libnx switch.ld needs a linker that understands linker scripts.
+use_mold = false
