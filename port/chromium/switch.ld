@@ -144,21 +144,21 @@ SECTIONS
 		. = ALIGN(8);
 	} :data
 
-	.tdata :data :tls
+	.tdata :
 	{
 		*(.tdata .tdata.* .gnu.linkonce.td.*)
 		. = ALIGN(8);
-	} :data
+	} :data :tls
 
 	PROVIDE_HIDDEN( __tdata_lma     = ADDR(.tdata)                  );
 	PROVIDE_HIDDEN( __tdata_lma_end = ADDR(.tdata) + SIZEOF(.tdata) );
 
-	.tbss :data :tls
+	.tbss :
 	{
 		*(.tbss .tbss.* .gnu.linkonce.tb.*)
 		*(.tcommon)
 		. = ALIGN(8);
-	} :data
+	} :data :tls
 
 	.bss :
 	{
@@ -169,12 +169,12 @@ SECTIONS
 	} :data
 
 	/* Reserve space for the TLS segment of the main thread */
-	.main.tls ALIGN(MAX(ALIGNOF(.tdata),ALIGNOF(.tbss))) :data :tls
+	.main.tls ALIGN(MAX(ALIGNOF(.tdata),ALIGNOF(.tbss))) :
 	{
 		. += SIZEOF(.tdata);
 		. = ALIGN(ALIGNOF(.tbss));
 		. += SIZEOF(.tbss);
-	} :data
+	} :data :tls
 
 	PROVIDE_HIDDEN( __tls_start   = ADDR(.main.tls)                     );
 	PROVIDE_HIDDEN( __tls_end     = ADDR(.main.tls) + SIZEOF(.main.tls) );
