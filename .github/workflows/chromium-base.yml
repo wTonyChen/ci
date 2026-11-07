@@ -124,6 +124,10 @@ jobs:
             /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -hlW "$ELF" | head -60 || true
             echo "--- dynamic relocs ---"
             /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -dW "$ELF" | head -20 || true
+            echo "--- dyn-syms summary (should be tiny, ideally 0 exported) ---"
+            /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -sW --dyn-syms "$ELF" 2>/dev/null | head -12 || true
+            echo "--- reloc types ---"
+            /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -rW "$ELF" 2>/dev/null | awk '/R_AARCH64/ {print $3}' | sort | uniq -c | head -10 || true
             echo "--- TEXTREL check (must be empty) ---"
             /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -dW "$ELF" | grep -i textrel || echo "no TEXTREL flag"
             echo "--- reloc count in .text ---"
