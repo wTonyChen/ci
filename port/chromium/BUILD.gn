@@ -68,6 +68,9 @@ config("nx_link") {
   _devkita64 = rebase_path("//third_party/devkitA64/aarch64-none-elf",
                            root_build_dir)
   _libnx = rebase_path("//third_party/libnx", root_build_dir)
+  # Chromium's Linux link config pulls in -latomic/-ldl/-lrt; Horizon has no such
+  # libraries, so point the search path at our empty archives.
+  _stubs = rebase_path("//port/chromium/stub_libs", root_build_dir)
 
   ldflags = [
     "-nostdlib",
@@ -78,6 +81,8 @@ config("nx_link") {
     "${_devkita64}/lib",
     "-L",
     "${_libnx}/lib",
+    "-L",
+    "${_stubs}",
     "-Wl,--gc-sections",
     "-Wl,--start-group",
     "${_devkita64}/lib/libc.a",
