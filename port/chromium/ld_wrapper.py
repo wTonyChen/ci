@@ -18,6 +18,7 @@ REAL_LD = os.environ.get(
 
 # Options lld knows but GNU ld does not.
 DROP = (
+    "--fatal-warnings",   # GNU ld warns about .eh_frame in switch.ld; not fatal
     "--icf=all",
     "--icf=none",
     "--color-diagnostics",
