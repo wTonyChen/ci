@@ -128,7 +128,7 @@ executable("nx_smoke") {
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
   ]
-  deps = [ "//base" ]
+  deps = [ "//third_party/zlib:chrome_zlib" ]
   # NOTE: `configs = [...]` is rejected ("Replacing nonempty list"); the default
   # configs always arrive first, so append and let the later flags win.
   configs += [ ":nx_link" ]
