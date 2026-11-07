@@ -81,6 +81,10 @@ config("nx_link") {
     # switch.specs flow uses, and unlike lld it accepts the non-PIC newlib
     # archives and the TLS sections in switch.ld.
     "-fuse-ld=bfd",
+    # The toolchain triple is aarch64-linux-gnu (Chromium's), which makes clang
+    # ask ld.bfd for the "aarch64linux" emulation — devkitA64's ld only knows the
+    # bare-metal "aarch64elf" one.
+    "-Wl,-m,aarch64elf",
     "-B${_devkita64}/bin",
     # devkitA64's newlib/libnx archives were not built with -fPIC, so a PIE link
     # needs text relocations to be tolerated.
