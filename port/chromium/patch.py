@@ -257,4 +257,32 @@ patch("build/config/compiler/BUILD.gn",
       '    }\n',
       "devkitA64 GNU ld cannot index")
 
+# 11) Drop dynamic symbol exports on the Switch target.
+#     Chromium adds `-rdynamic` (config "export_dynamic") plus a pile of
+#     `--export-dynamic-symbol=__alloc_token_*` hints. On a bare-metal NRO there
+#     is no dynamic linker to resolve them, and Horizon's loader is much stricter
+#     about the dynamic section than an emulator: the ELF ends up with exported
+#     (and, for the alloc-token hints, undefined) dynamic symbols. Keep the
+#     dynamic section as small as devkitPro's own binaries.
+patch("build/config/compiler/BUILD.gn",
+      '  if (is_linux || export_libcxxabi_from_executables) {\n'
+      '    ldflags = [ "-rdynamic" ]\n'
+      '  }\n',
+      '  if ((is_linux || export_libcxxabi_from_executables) &&\n'
+      '      current_cpu != "arm64") {\n'
+      '    # No dynamic linker on the Switch target (see port/chromium/patch.py).\n'
+      '    ldflags = [ "-rdynamic" ]\n'
+      '  }\n',
+      "No dynamic linker on the Switch target")
+
+patch("build/config/sanitizers/BUILD.gn",
+      "    if (is_linux || is_chromeos) {\n"
+      '      ldflags = [\n'
+      '        # go/keep-sorted start\n',
+      "    if ((is_linux || is_chromeos) && current_cpu != \"arm64\") {\n"
+      '      ldflags = [\n'
+      '        # go/keep-sorted start\n',
+      "current_cpu != \"arm64\") {\n"
+      '      ldflags = [\n')
+
 print("all chromium patches applied")
