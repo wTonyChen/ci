@@ -70,7 +70,6 @@ use_mold = false
 # read their index ("archive has no index; run ranlib"). Use regular archives.
 use_thin_archive = false
 
-# The Rust half of the tree needs libunwind (_Unwind_GetIP) and Chromium's Rust
-# allocator shim, neither of which exists for bare-metal aarch64. M3 only needs
-# the C++ world, so keep Rust out of the graph and revisit in M4.
-enable_rust = false
+# NOTE: Rust stays ENABLED (build/rust/rust_target.gni asserts on it), but M3's
+# smoke target deliberately depends on a pure-C library instead of //base so the
+# link does not drag in Rust std (which needs libunwind). Revisit in M4.
