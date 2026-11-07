@@ -92,7 +92,9 @@ config("nx_link") {
 executable("nx_smoke") {
   sources = [ "//port/chromium/smoke_main.cc" ]
   deps = [ "//base" ]
-  configs = [ ":nx_link" ]
+  # NOTE: `configs = [...]` is rejected ("Replacing nonempty list"); the default
+  # configs always arrive first, so append and let the later flags win.
+  configs += [ ":nx_link" ]
 }
 
 group("gn_all") {
