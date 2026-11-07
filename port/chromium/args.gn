@@ -65,3 +65,7 @@ v8_enable_sandbox = false
 
 # libnx switch.ld needs a linker that understands linker scripts.
 use_mold = false
+
+# Chromium builds thin archives by default on Linux; devkitA64's GNU ld cannot
+# read their index ("archive has no index; run ranlib"). Use regular archives.
+use_thin_archive = false
