@@ -77,22 +77,17 @@ config("nx_link") {
     # libnx's switch.ld/switch.specs build a PIE with libnx's own _start.
     "-pie",
     "-Wl,--no-dynamic-linker",
-    # Use devkitA64's GNU ld (bfd) for the final link: it is what devkitPro's own
-    # switch.specs flow uses, and unlike lld it accepts the non-PIC newlib
-    # archives and the TLS sections in switch.ld.
-    # clang requires an ABSOLUTE path here; CI installs the wrapper into
-    # /usr/local/bin (see the workflow).
-    "-fuse-ld=/usr/local/bin/nx-ld-wrapper",
-    # The toolchain triple is aarch64-linux-gnu (Chromium's), which makes clang
-    # ask ld.bfd for the "aarch64linux" emulation — devkitA64's ld only knows the
-    # bare-metal "aarch64elf" one.
-    "-Wl,-m,aarch64elf",
-    "-B${_devkita64}/bin",
+    # lld understands the clang objects we produce; the TLS-aware linker script
+    # (//port/chromium/switch.ld) keeps it happy about thread-local storage.
+    "-fuse-ld=lld",
     # devkitA64's newlib/libnx archives were not built with -fPIC, so a PIE link
     # needs text relocations to be tolerated.
     "-Wl,-z,notext",
+    # Our own copy of libnx's switch.ld that declares a PT_TLS segment (lld
+    # requires it; GNU ld tolerated the original, but lld understands LLVM
+    # objects, which is what we produce).
     "-Wl,-T",
-    "${_libnx}/switch.ld",
+    rebase_path("//port/chromium/switch.ld", root_build_dir),
     "-L",
     "${_devkita64}/lib",
     "-L",
