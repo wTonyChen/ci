@@ -64,6 +64,7 @@ jobs:
           ls -d "$WORK/src/third_party/libnx/include"
           echo "--- patching BUILDCONFIG (wire switch_config into default configs) ---"
           cd "$WORK/src" && python3 port/chromium/patch.py
+          chmod +x port/chromium/ld_wrapper.py port/chromium/patch.py 2>/dev/null || true
           echo "--- args.gn ---"
           cat "$WORK/src/port/chromium/args.gn"
 
