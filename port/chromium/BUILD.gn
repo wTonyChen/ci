@@ -36,6 +36,10 @@ config("switch_config") {
   # #include_next only looks at directories AFTER the current one.
   cflags = [
     "--target=aarch64-none-elf",
+    # The final link is a PIE; without position-independent code the compiler
+    # emits absolute relocations inside .text, which libnx's loader does not
+    # patch at runtime (that was the instant crash on hardware).
+    "-fPIE",
     "-isystem",
     "${_devkita64}/include/c++/15.2.0",
     "-isystem",
