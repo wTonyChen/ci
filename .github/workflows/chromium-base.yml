@@ -144,6 +144,8 @@ jobs:
         run: |
           set +e
           DKP=/opt/devkitpro
+          export DEVKITPRO=$DKP
+          export DEVKITARM=$DKP/devkitA64
           SRC="$GITHUB_WORKSPACE/port/chromium/ref_hello.c"
           cd /tmp
           $DKP/devkitA64/bin/aarch64-none-elf-gcc \
