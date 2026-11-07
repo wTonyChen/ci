@@ -124,6 +124,10 @@ jobs:
             /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -hlW "$ELF" | head -60 || true
             echo "--- dynamic relocs ---"
             /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -dW "$ELF" | head -20 || true
+            echo "--- TEXTREL check (must be empty) ---"
+            /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -dW "$ELF" | grep -i textrel || echo "no TEXTREL flag"
+            echo "--- reloc count in .text ---"
+            /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -rW "$ELF" 2>/dev/null | grep -c 'R_AARCH64' || true
           else
             echo "nx_smoke ELF missing"
           fi
