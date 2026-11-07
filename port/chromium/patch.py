@@ -247,11 +247,14 @@ patch("base/time/time_exploded_posix.cc",
 #     flavour (-T -s) for our target; Chromium itself does this for gcc/Linux.
 patch("build/config/compiler/BUILD.gn",
       '    arflags = [\n      "-T",\n      "-S",\n    ]\n',
-      '    arflags = [\n      "-T",\n'
+      '    arflags = [ "-T" ]\n'
+      '    if (current_cpu == "arm64") {\n'
       '      # Chromium-NX: devkitA64 GNU ld cannot index a symbol-less thin\n'
       '      # archive, so keep the index for the Switch target.\n'
-      '      current_cpu == "arm64" ? "-s" : "-S",\n'
-      '    ]\n',
+      '      arflags += [ "-s" ]\n'
+      '    } else {\n'
+      '      arflags += [ "-S" ]\n'
+      '    }\n',
       "devkitA64 GNU ld cannot index")
 
 print("all chromium patches applied")
