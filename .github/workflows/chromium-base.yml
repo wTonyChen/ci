@@ -137,7 +137,10 @@ jobs:
           fi
           echo "=== M4: package NRO ==="
           if [ -f "$ELF" ] && [ -x /opt/devkitpro/tools/bin/elf2nro ]; then
-            /opt/devkitpro/tools/bin/elf2nro "$ELF" "${WORK}/src/out/switch/nx_smoke.nro" --icon=/opt/devkitpro/libnx/default_icon.jpg 2>&1 | tail -5
+            # Application-mode launches read the NACP; generate one so Sphaira /
+            # hbmenu have proper title metadata.
+            /opt/devkitpro/tools/bin/nacptool --create "nx_smoke" "Chromium-NX" "0.1" /tmp/nx_smoke.nacp 2>&1 | tail -2
+            /opt/devkitpro/tools/bin/elf2nro "$ELF" "${WORK}/src/out/switch/nx_smoke.nro" --icon=/opt/devkitpro/libnx/default_icon.jpg --nacp=/tmp/nx_smoke.nacp 2>&1 | tail -5
             ls -l "${WORK}/src/out/switch/nx_smoke.nro" 2>/dev/null || true
           else
             echo "elf2nro not available or ELF missing"
@@ -163,7 +166,8 @@ jobs:
           echo "=== ref gcc rc=$rc ==="
           ls -l /tmp/ref_hello.elf 2>/dev/null
           if [ $rc -eq 0 ]; then
-            $DKP/tools/bin/elf2nro /tmp/ref_hello.elf /tmp/ref_hello.nro --icon=$DKP/libnx/default_icon.jpg 2>&1 | tail -3
+            $DKP/tools/bin/nacptool --create "ref_hello" "devkitPro" "1.0" /tmp/ref_hello.nacp 2>&1 | tail -2
+            $DKP/tools/bin/elf2nro /tmp/ref_hello.elf /tmp/ref_hello.nro --icon=$DKP/libnx/default_icon.jpg --nacp=/tmp/ref_hello.nacp 2>&1 | tail -3
             ls -l /tmp/ref_hello.nro 2>/dev/null
           fi
           exit 0
