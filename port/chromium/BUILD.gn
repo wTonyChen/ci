@@ -84,6 +84,11 @@ config("nx_link") {
     "-L",
     "${_stubs}",
     "-Wl,--gc-sections",
+    # libbase.a brings partition_alloc's malloc/new/free replacements; newlib's
+    # libc.a and libstdc++ also define them. Chromium normally relies on the C
+    # library allowing overrides; with archives both copies get pulled in, so
+    # accept the duplicate and keep the first (partition_alloc) definition.
+    "-Wl,--allow-multiple-definition",
     "-Wl,--start-group",
     "${_devkita64}/lib/libc.a",
     "${_devkita64}/lib/libm.a",
