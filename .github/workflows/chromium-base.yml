@@ -117,4 +117,30 @@ jobs:
           grep -aE 'FAILED|fatal error|error:|undefined reference' /tmp/ninja.log \
             | sed 's/^\[\?[0-9]*\/[0-9]*\]\? *//' | sort -u | head -25
           tail -15 /tmp/ninja.log
+          echo "=== M4: ELF sanity ==="
+          ELF="${WORK}/src/out/switch/nx_smoke"
+          if [ -f "$ELF" ]; then
+            ls -l "$ELF"
+            /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -hlW "$ELF" | head -60 || true
+            echo "--- dynamic relocs ---"
+            /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -dW "$ELF" | head -20 || true
+          else
+            echo "nx_smoke ELF missing"
+          fi
+          echo "=== M4: package NRO ==="
+          if [ -f "$ELF" ] && [ -x /opt/devkitpro/tools/bin/elf2nro ]; then
+            /opt/devkitpro/tools/bin/elf2nro "$ELF" "${WORK}/src/out/switch/nx_smoke.nro" --icon=/opt/devkitpro/libnx/default_icon.jpg 2>&1 | tail -5
+            ls -l "${WORK}/src/out/switch/nx_smoke.nro" 2>/dev/null || true
+          else
+            echo "elf2nro not available or ELF missing"
+          fi
           exit 0
+
+      - name: upload NRO artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nx_smoke-nro
+          path: work/src/out/switch/nx_smoke.nro
+          if-no-files-found: warn
+          retention-days: 14
