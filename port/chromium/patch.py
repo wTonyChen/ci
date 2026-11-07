@@ -241,4 +241,17 @@ patch("base/time/time_exploded_posix.cc",
       "#endif  // !__SWITCH__ (newlib struct tm has neither field)\n",
       "newlib struct tm has neither field")
 
+# 10) Archive flags. build/config/compiler:thin_archive emits `ar -T -S` for
+#     clang targets, i.e. a THIN archive with no symbol table. devkitA64's GNU ld
+#     cannot read that ("archive has no index; run ranlib"). Use the indexed thin
+#     flavour (-T -s) for our target; Chromium itself does this for gcc/Linux.
+patch("build/config/compiler/BUILD.gn",
+      '    arflags = [\n      "-T",\n      "-S",\n    ]\n',
+      '    arflags = [\n      "-T",\n'
+      '      # Chromium-NX: devkitA64 GNU ld cannot index a symbol-less thin\n'
+      '      # archive, so keep the index for the Switch target.\n'
+      '      current_cpu == "arm64" ? "-s" : "-S",\n'
+      '    ]\n',
+      "devkitA64 GNU ld cannot index")
+
 print("all chromium patches applied")
