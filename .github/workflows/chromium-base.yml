@@ -109,6 +109,11 @@ jobs:
           (cd "${WORK}/src/out/switch" && ../../third_party/devkitA64/aarch64-none-elf/bin/readelf -h obj/nx_smoke/smoke_main.o | grep -E 'Machine|Flags|Type')
           head -c 1500 /tmp/ld_wrapper_args.txt 2>/dev/null | tr ' ' '\n' | grep -E '^-m$|^aarch64|^-T$|switch.ld' | head -12
           echo "--- end ld debug ---"
+          echo "--- objdump view ---"
+          (cd "${WORK}/src/out/switch" && ls -l obj/nx_smoke/smoke_main.o obj/third_party/zlib/zlib/crc32.o)
+          (cd "${WORK}/src/out/switch" && ../../third_party/devkitA64/aarch64-none-elf/bin/objdump -f obj/nx_smoke/smoke_main.o 2>&1 | head -8)
+          (cd "${WORK}/src/out/switch" && od -An -tx1 -N 64 obj/nx_smoke/smoke_main.o)
+          echo "--- end objdump view ---"
           grep -aE 'FAILED|fatal error|error:|undefined reference' /tmp/ninja.log \
             | sed 's/^\[\?[0-9]*\/[0-9]*\]\? *//' | sort -u | head -25
           tail -15 /tmp/ninja.log
