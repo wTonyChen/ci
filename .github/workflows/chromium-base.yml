@@ -140,6 +140,35 @@ jobs:
           fi
           exit 0
 
+      - name: build reference NRO with devkitPro GCC (control sample)
+        run: |
+          set +e
+          DKP=/opt/devkitpro
+          SRC="$GITHUB_WORKSPACE/port/chromium/ref_hello.c"
+          cd /tmp
+          $DKP/devkitA64/bin/aarch64-none-elf-gcc \
+            -specs=$DKP/libnx/switch.specs \
+            -I$DKP/libnx/include -L$DKP/libnx/lib -lnx \
+            -g -O2 -ffunction-sections \
+            -o /tmp/ref_hello.elf "$SRC"
+          rc=$?
+          echo "=== ref gcc rc=$rc ==="
+          ls -l /tmp/ref_hello.elf 2>/dev/null
+          if [ $rc -eq 0 ]; then
+            $DKP/tools/bin/elf2nro /tmp/ref_hello.elf /tmp/ref_hello.nro --icon=$DKP/libnx/default_icon.jpg 2>&1 | tail -3
+            ls -l /tmp/ref_hello.nro 2>/dev/null
+          fi
+          exit 0
+
+      - name: upload reference NRO artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ref_hello-nro
+          path: /tmp/ref_hello.nro
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: upload NRO artifact
         if: always()
         uses: actions/upload-artifact@v4
