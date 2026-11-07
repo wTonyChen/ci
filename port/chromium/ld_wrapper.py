@@ -31,8 +31,17 @@ DROP = (
 )
 
 
+LOG = "/tmp/ld_wrapper_args.txt"
+
+
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith(DROP)]
+    raw = sys.argv[1:]
+    try:
+        with open(LOG, "a") as f:
+            f.write(" ".join(raw) + "\n")
+    except OSError:
+        pass
+    args = [a for a in raw if not a.startswith(DROP)]
     if not os.path.exists(REAL_LD):
         sys.stderr.write("ld_wrapper: %s not found\n" % REAL_LD)
         return 127
