@@ -17,22 +17,24 @@
 // PartitionAlloc: TagMemoryRange* / RemaskPointer are ifunc-resolved on Linux
 // with MTE; clang cannot emit ifunc for a bare-metal target, so they are stubs.
 // ---------------------------------------------------------------------------
-extern "C" void* TagMemoryRangeRandomlyInternal(void* ptr,
-                                                size_t size,
-                                                uint64_t mask) {
+namespace partition_alloc::internal {
+
+void* TagMemoryRangeRandomlyInternal(void* ptr, size_t size, uint64_t mask) {
   (void)size;
   (void)mask;
   return ptr;
 }
 
-extern "C" void* TagMemoryRangeIncrementInternal(void* ptr, size_t size) {
+void* TagMemoryRangeIncrementInternal(void* ptr, size_t size) {
   (void)size;
   return ptr;
 }
 
-extern "C" void* RemaskPointerInternal(void* ptr) {
+void* RemaskPointerInternal(void* ptr) {
   return ptr;
 }
+
+}  // namespace partition_alloc::internal
 
 // ---------------------------------------------------------------------------
 // PartitionAlloc: GetAccessFlags(PageAccessibilityConfiguration).
@@ -139,3 +141,29 @@ int pthread_getname_np(pthread_t thread, char* name, size_t len) {
 }
 
 }  // extern "C"
+
+// ---------------------------------------------------------------------------
+// C runtime hooks: crti.o/crtbegin.o are not part of our link line (we link
+// -nostdlib), but libnx's startup still references these.
+// ---------------------------------------------------------------------------
+extern "C" void _init(void) {}
+extern "C" void _fini(void) {}
+
+// ---------------------------------------------------------------------------
+// base::debug::StackTrace::OutputToStreamWithPrefixImpl
+// The Chromium build ships this only for the "streamed stack trace" platforms;
+// for the Switch bring-up we simply emit nothing.
+// ---------------------------------------------------------------------------
+#include <ostream>
+
+#include "base/debug/stack_trace.h"
+
+namespace base::debug {
+
+void StackTrace::OutputToStreamWithPrefixImpl(std::ostream* os,
+                                              cstring_view prefix_string) const {
+  (void)os;
+  (void)prefix_string;
+}
+
+}  // namespace base::debug
