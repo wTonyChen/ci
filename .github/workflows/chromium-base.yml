@@ -99,6 +99,11 @@ jobs:
           echo "--- ar command for libbase.a ---"
           (cd "${WORK}/src/out/switch" && ninja -t commands obj/base/libbase.a 2>/dev/null | tail -2) || true
           echo "--- end ar ---"
+          echo "--- object arch + link cmd ---"
+          (cd "${WORK}/src/out/switch" && file obj/nx_smoke/smoke_main.o obj/third_party/zlib/zlib/crc32.o 2>&1 | head -4) || true
+          (cd "${WORK}/src/out/switch" && ../../third_party/devkitA64/aarch64-none-elf/bin/readelf -h obj/nx_smoke/smoke_main.o 2>&1 | head -8) || true
+          (cd "${WORK}/src/out/switch" && ninja -t commands nx_smoke 2>/dev/null | tail -1 > /tmp/linkcmd.txt; grep -o -- '--target=[^ ]*' /tmp/linkcmd.txt | head -2; grep -o -- '-fuse-ld=[^ ]*' /tmp/linkcmd.txt | head -2) || true
+          echo "--- end object arch ---"
           grep -aE 'FAILED|fatal error|error:|undefined reference' /tmp/ninja.log \
             | sed 's/^\[\?[0-9]*\/[0-9]*\]\? *//' | sort -u | head -25
           tail -15 /tmp/ninja.log
