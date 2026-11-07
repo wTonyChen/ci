@@ -38,6 +38,8 @@ jobs:
           docker run --rm -v /opt/devkitpro:/host-dkp devkitpro/devkita64:latest \
             cp -a /opt/devkitpro/. /host-dkp/
           /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc --version | head -1
+          echo "--- devkitPro package versions (libnx matters for firmware support) ---"
+          docker run --rm devkitpro/devkita64:latest pacman -Q 2>/dev/null | grep -iE 'libnx|devkita64|devkit-tools|switch-tools' || true
           df -h / | tail -1
 
       - name: gclient sync chromium (no history)
