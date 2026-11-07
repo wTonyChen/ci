@@ -148,9 +148,11 @@ jobs:
           cd /tmp
           $DKP/devkitA64/bin/aarch64-none-elf-gcc \
             -specs=$DKP/libnx/switch.specs \
-            -I$DKP/libnx/include -L$DKP/libnx/lib -lnx \
+            -I$DKP/libnx/include \
             -g -O2 -ffunction-sections \
-            -o /tmp/ref_hello.elf "$SRC"
+            -Wl,-z,notext \
+            -o /tmp/ref_hello.elf "$SRC" \
+            -L$DKP/libnx/lib -lnx
           rc=$?
           echo "=== ref gcc rc=$rc ==="
           ls -l /tmp/ref_hello.elf 2>/dev/null
