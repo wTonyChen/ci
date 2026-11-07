@@ -6,6 +6,7 @@
 // //base, which the M3 smoke target deliberately avoids (see BUILD.gn).
 
 #include <errno.h>
+#include <malloc.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -18,6 +19,19 @@ extern "C" {
 // libnx's startup still references these hooks.
 void _init(void) {}
 void _fini(void) {}
+
+// newlib has memalign() but not POSIX posix_memalign().
+int posix_memalign(void** memptr, size_t alignment, size_t size) {
+  if (alignment < sizeof(void*) || (alignment & (alignment - 1)) != 0) {
+    return EINVAL;
+  }
+  void* p = memalign(alignment, size);
+  if (!p) {
+    return ENOMEM;
+  }
+  *memptr = p;
+  return 0;
+}
 
 // Rust core (and some C code) calls bcmp; newlib only has memcmp.
 int bcmp(const void* s1, const void* s2, size_t n) {
