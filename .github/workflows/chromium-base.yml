@@ -42,6 +42,21 @@ jobs:
           docker run --rm devkitpro/devkita64:latest pacman -Q 2>/dev/null | grep -iE 'libnx|devkita64|devkit-tools|switch-tools' || true
           df -h / | tail -1
 
+      - name: build+install libnx from source (firmware 23.0.0 support)
+        run: |
+          # The docker image's libnx is from Feb 2026; FW 23.0.0 (Sep 2026)
+          # needs newer libnx ("svc/spl: update types for 23.0.0" landed Sep 17).
+          # Homebrew built with the old libnx crashes on FW 23 even in official
+          # devkitPro builds, which is exactly what we saw on hardware.
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitA64
+          git clone --depth 1 https://github.com/switchbrew/libnx.git /tmp/libnx-src
+          cd /tmp/libnx-src
+          make -j4 2>&1 | tail -4
+          sudo env DEVKITPRO=/opt/devkitpro DEVKITARM=/opt/devkitpro/devkitA64 \
+            make install 2>&1 | tail -4
+          ls -l /opt/devkitpro/libnx/lib/libnx.a /opt/devkitpro/libnx/switch.ld
+
       - name: gclient sync chromium (no history)
         run: |
           mkdir -p "$WORK" && cd "$WORK"
@@ -64,6 +79,9 @@ jobs:
           ln -sfn /opt/devkitpro/libnx "$WORK/src/third_party/libnx"
           ls -l "$WORK/src/third_party/devkitA64/bin/aarch64-none-elf-gcc"
           ls -d "$WORK/src/third_party/libnx/include"
+          echo "--- regenerate lld-compatible switch.ld from the installed libnx ---"
+          python3 port/chromium/patch_switch_ld.py /opt/devkitpro/libnx/switch.ld \
+            "$WORK/src/port/chromium/switch.ld"
           echo "--- patching BUILDCONFIG (wire switch_config into default configs) ---"
           cd "$WORK/src" && python3 port/chromium/patch.py
           chmod +x port/chromium/ld_wrapper.py port/chromium/patch.py 2>/dev/null || true
