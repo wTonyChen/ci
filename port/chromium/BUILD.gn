@@ -40,6 +40,13 @@ config("switch_config") {
     # emits absolute relocations inside .text, which libnx's loader does not
     # patch at runtime (that was the instant crash on hardware).
     "-fPIE",
+    # devkitPro's own switch_rules use exactly these; -mtp=soft is essential:
+    # Horizon's TPIDR_EL0 is the kernel thread pointer, so userland TLS must go
+    # through libnx's software thread pointer. Without it any TLS access (e.g.
+    # errno inside printf) reads kernel memory and the process dies instantly.
+    "-mtp=soft",
+    "-march=armv8-a+crc+crypto",
+    "-mtune=cortex-a57",
     "-isystem",
     "${_devkita64}/include/c++/15.2.0",
     "-isystem",
