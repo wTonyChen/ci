@@ -172,6 +172,12 @@ jobs:
           timeout 3000 ninja -C out/switch -j4 base nx_smoke > /tmp/ninja.log 2>&1
           rc=$?
           echo "=== ninja base rc=$rc ==="
+          echo "--- does the nx_smoke target exist at all? ---"
+          (cd "${WORK}/src/out/switch" && ninja -t targets all 2>/dev/null | grep -c 'nx_smoke' ;             ninja -t targets all 2>/dev/null | grep nx_smoke | head -5)
+          echo "--- explicit nx_smoke build (verbose tail) ---"
+          (cd "${WORK}/src/out/switch" && timeout 1200 ninja -v nx_smoke 2>&1 | tail -25)
+          echo "--- out/switch contents ---"
+          ls -l "${WORK}/src/out/switch" 2>/dev/null | head -12
           echo "--- ninja.log tail (link errors live here) ---"
           tail -n 90 /tmp/ninja.log | sed 's/\x1b\[[0-9;]*m//g'
           echo "--- end tail ---"
