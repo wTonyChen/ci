@@ -42,6 +42,20 @@ jobs:
           docker run --rm devkitpro/devkita64:latest pacman -Q 2>/dev/null | grep -iE 'libnx|devkita64|devkit-tools|switch-tools' || true
           df -h / | tail -1
 
+      - name: build probe_mmap with the IMAGE libnx (known-good reference)
+        run: |
+          set +e
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitA64
+          sudo cp -a /opt/devkitpro/libnx /opt/libnx-image
+          echo "--- image libnx backed up ---"
+          cd "$GITHUB_WORKSPACE/probes"
+          make -s PROBE=mmap 2>&1 | tail -5
+          echo "=== probe_mmap (image libnx) make rc=$? ==="
+          ls -l probe_mmap.nro 2>/dev/null
+          cp -f probe_mmap.nro /tmp/probe_mmap_image.nro 2>/dev/null
+          exit 0
+
       - name: build+install libnx from source (firmware 23.0.0 support)
         run: |
           # The docker image's libnx is from Feb 2026; FW 23.0.0 (Sep 2026)
@@ -56,6 +70,20 @@ jobs:
           sudo env DEVKITPRO=/opt/devkitpro DEVKITARM=/opt/devkitpro/devkitA64 \
             make install 2>&1 | tail -4
           ls -l /opt/devkitpro/libnx/lib/libnx.a /opt/devkitpro/libnx/switch.ld
+
+      - name: build probe_mmap with the NEW (source-built) libnx
+        run: |
+          set +e
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitA64
+          cd "$GITHUB_WORKSPACE/probes"
+          make -s clean >/dev/null 2>&1
+          rm -f probe_mmap.nro
+          make -s PROBE=mmap 2>&1 | tail -5
+          echo "=== probe_mmap (new libnx) make rc=$? ==="
+          ls -l probe_mmap.nro 2>/dev/null
+          cp -f probe_mmap.nro /tmp/probe_mmap_new.nro 2>/dev/null
+          exit 0
 
       - name: gclient sync chromium (no history)
         run: |
@@ -236,6 +264,17 @@ jobs:
           done
           ls -l /tmp/probes/*.nro 2>/dev/null
           exit 0
+
+      - name: upload probe_mmap libnx A/B artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe_mmap-libnx-ab
+          path: |
+            /tmp/probe_mmap_image.nro
+            /tmp/probe_mmap_new.nro
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: upload bisect probes artifact
         if: always()
