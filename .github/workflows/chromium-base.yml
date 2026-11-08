@@ -129,6 +129,10 @@ jobs:
           ln -sfn /opt/devkitpro/libnx "$WORK/src/third_party/libnx"
           ls -l "$WORK/src/third_party/devkitA64/bin/aarch64-none-elf-gcc"
           ls -d "$WORK/src/third_party/libnx/include"
+          echo "--- does clang accept -mtp=soft? ---"
+          "$WORK/src/third_party/llvm-build/Release+Asserts/bin/clang++" \
+            --target=aarch64-none-elf -mtp=soft -c -x c++ /dev/null -o /tmp/mtp.o 2>&1 | head -3
+          echo "mtp probe rc=$? (0 = accepted)"
           echo "--- regenerate lld-compatible switch.ld from the installed libnx ---"
           python3 port/chromium/patch_switch_ld.py /opt/devkitpro/libnx/switch.ld \
             "$WORK/src/port/chromium/switch.ld"
@@ -229,6 +233,7 @@ jobs:
             -specs=$DKP/libnx/switch.specs \
             -I$DKP/libnx/include \
             -g -O2 -ffunction-sections \
+            -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE \
             -Wl,-z,notext \
             -o /tmp/ref_hello.elf "$SRC" \
             -L$DKP/libnx/lib -lnx
