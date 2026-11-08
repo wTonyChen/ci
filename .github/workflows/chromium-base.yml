@@ -216,7 +216,7 @@ jobs:
             (cd "${WORK}/src/out/switch" && ninja -t commands nx_smoke 2>/dev/null | tail -1) > /tmp/linkcmd.txt
             sed 's/-Wl,-z,notext//g' /tmp/linkcmd.txt > /tmp/linkcmd-notext.sh
             echo "--- lld output without notext (names the offending objects) ---"
-            bash /tmp/linkcmd-notext.sh 2>&1 | head -40 || true
+            (cd "${WORK}/src/out/switch" && bash /tmp/linkcmd-notext.sh 2>&1 | head -40) || true
             echo "--- end ---"
           fi
           echo "=== M4: package NRO ==="
