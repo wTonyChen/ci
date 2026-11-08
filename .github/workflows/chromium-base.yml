@@ -30,23 +30,30 @@ jobs:
           git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git /opt/depot_tools
           echo "/opt/depot_tools" >> "$GITHUB_PATH"
 
-      - name: install devkitA64 (from the official image)
+      - name: install devkitA64 (dkp-pacman, latest packages; docker fallback)
         run: |
-          df -h / | tail -1
-          docker pull devkitpro/devkita64:latest
-          sudo mkdir -p /opt/devkitpro
-          # Upgrade the packages inside the image first: the published tag is
-          # often months old (it shipped GCC 15.2 from Feb 2026 while FW 23.0.0
-          # era homebrew needs the GCC 16/newlib toolchain + current libnx).
-          docker run --rm -v /opt/devkitpro:/host-dkp devkitpro/devkita64:latest \
-            bash -lc 'pacman -Syu --noconfirm 2>&1 | tail -6; cp -a /opt/devkitpro/. /host-dkp/'
-          echo "--- toolchain after upgrade ---"
+          set +e
+          # The published docker image is months old (GCC 15.2 / libnx Feb 2026),
+          # while FW 23 era homebrew needs the current GCC 16/newlib + libnx.
+          # devkitPro's own installer gives us the latest packages directly.
+          wget -q https://apt.devkitpro.org/install-devkitpro-pacman -O /tmp/inst.sh
+          chmod +x /tmp/inst.sh
+          sudo /tmp/inst.sh 2>&1 | tail -6
+          sudo dkp-pacman -Syu --noconfirm 2>&1 | tail -6
+          sudo dkp-pacman -S --noconfirm --needed switch-dev switch-tools 2>&1 | tail -6
+          echo "--- toolchain after dkp-pacman ---"
+          /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc --version 2>/dev/null | head -1
+          ls -l /opt/devkitpro/libnx/lib/libnx.a 2>/dev/null | cut -c1-95
+          if [ ! -x /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc ]; then
+            echo "dkp-pacman path failed -> falling back to the docker image"
+            docker pull devkitpro/devkita64:latest
+            sudo mkdir -p /opt/devkitpro
+            docker run --rm -v /opt/devkitpro:/host-dkp devkitpro/devkita64:latest \
+              cp -a /opt/devkitpro/. /host-dkp/
+          fi
+          echo "--- final ---"
           /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc --version | head -1
-          ls -l /opt/devkitpro/libnx/lib/libnx.a 2>/dev/null | cut -c1-90
-          /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc --version | head -1
-          echo "--- devkitPro package versions (libnx matters for firmware support) ---"
-          docker run --rm devkitpro/devkita64:latest pacman -Q 2>/dev/null | grep -iE 'libnx|devkita64|devkit-tools|switch-tools' || true
-          df -h / | tail -1
+          ls -l /opt/devkitpro/libnx/lib/libnx.a /opt/devkitpro/libnx/switch.ld 2>/dev/null | cut -c1-95
 
       - name: build probe_mmap with the IMAGE libnx (known-good reference)
         run: |
