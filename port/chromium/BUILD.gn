@@ -40,11 +40,11 @@ config("switch_config") {
     # emits absolute relocations inside .text, which libnx's loader does not
     # patch at runtime (that was the instant crash on hardware).
     "-fPIE",
-    # devkitPro's own switch_rules use exactly these; -mtp=soft is essential:
-    # Horizon's TPIDR_EL0 is the kernel thread pointer, so userland TLS must go
-    # through libnx's software thread pointer. Without it any TLS access (e.g.
-    # errno inside printf) reads kernel memory and the process dies instantly.
-    "-mtp=soft",
+    # NOTE: clang rejects `-mtp=soft` ("invalid thread pointer reading mode").
+    # devkitPro's GCC uses it to route TLS through libnx's __aarch64_read_tp;
+    # clang on AArch64 emits `mrs tpidr_el0` instead, which is the KERNEL thread
+    # pointer on Horizon. Any TU that touches TLS would then read kernel memory.
+    # So: keep Chromium TUs free of TLS (they mostly are) and do NOT pass -mtp=.
     "-march=armv8-a+crc+crypto",
     "-mtune=cortex-a57",
     "-isystem",
@@ -91,8 +91,8 @@ config("nx_link") {
     # lld understands the clang objects we produce; the TLS-aware linker script
     # (//port/chromium/switch.ld) keeps it happy about thread-local storage.
     "-fuse-ld=lld",
-    # devkitA64's newlib/libnx archives were not built with -fPIC, so a PIE link
-    # needs text relocations to be tolerated.
+    # If this is NOT needed the objects are clean; keep it only as a safety net
+    # and watch the TEXTREL diagnostics in the CI log.
     "-Wl,-z,notext",
     # Our own copy of libnx's switch.ld that declares a PT_TLS segment (lld
     # requires it; GNU ld tolerated the original, but lld understands LLVM
