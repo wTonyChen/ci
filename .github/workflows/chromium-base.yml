@@ -169,7 +169,7 @@ jobs:
           cd "$WORK/src"
           [ -d out/switch ] || { echo "no out/switch (gn gen failed)"; exit 0; }
           set +e
-          timeout 3000 ninja -C out/switch -j4 base nx_smoke > /tmp/ninja.log 2>&1
+          timeout 3000 ninja -C out/switch -j4 base nx_smoke nx_hello > /tmp/ninja.log 2>&1
           rc=$?
           echo "=== ninja base rc=$rc ==="
           echo "--- does the nx_smoke target exist at all? ---"
@@ -254,7 +254,14 @@ jobs:
             # Application-mode launches read the NACP; generate one so Sphaira /
             # hbmenu have proper title metadata.
             /opt/devkitpro/tools/bin/nacptool --create "nx_smoke" "Chromium-NX" "0.1" /tmp/nx_smoke.nacp 2>&1 | tail -2
-            /opt/devkitpro/tools/bin/elf2nro "$ELF" "${WORK}/src/out/switch/nx_smoke.nro" --icon=/opt/devkitpro/libnx/default_icon.jpg --nacp=/tmp/nx_smoke.nacp 2>&1 | tail -5
+            for exe in nx_smoke nx_hello; do
+            E="${WORK}/src/out/switch/$exe"
+            [ -f "$E" ] || { echo "missing $exe"; continue; }
+            /opt/devkitpro/tools/bin/nacptool --create "$exe" "Chromium-NX" "0.1" "/tmp/$exe.nacp" >/dev/null 2>&1
+            /opt/devkitpro/tools/bin/elf2nro "$E" "${WORK}/src/out/switch/$exe.nro" \
+              --icon=/opt/devkitpro/libnx/default_icon.jpg --nacp="/tmp/$exe.nacp" 2>&1 | tail -3
+            ls -l "${WORK}/src/out/switch/$exe.nro" || true
+          done
             ls -l "${WORK}/src/out/switch/nx_smoke.nro" 2>/dev/null || true
           else
             echo "elf2nro not available or ELF missing"
@@ -351,7 +358,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nx_smoke-elf
-          path: work/src/out/switch/nx_smoke
+          path: |
+            work/src/out/switch/nx_smoke
+            work/src/out/switch/nx_hello
           if-no-files-found: warn
           retention-days: 14
 
@@ -360,6 +369,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nx_smoke-nro
-          path: work/src/out/switch/nx_smoke.nro
+          path: work/src/out/switch/*.nro
           if-no-files-found: warn
           retention-days: 14
