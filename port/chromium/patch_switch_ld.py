@@ -50,7 +50,11 @@ def main() -> int:
             src = (src[:rodata_block_start] +
                    src[rodata_block_end + len("} :rodata\n"):])
 
-        anchor = "\tPROVIDE_HIDDEN( __bss_start__ = ADDR(.bss) );"
+        # Insert right after .data and BEFORE .tdata/.tbss/.bss: BSS must stay at
+        # the end of the segment (a NOBITS section in the middle of a PT_LOAD
+        # would make elf2nro compute BssSize == 0 and the loader would not map
+        # the zero-fill region correctly).
+        anchor = "\t.tdata :\n"
         if anchor in src:
             moved = (
                 "\t/* Chromium-NX: writable, see port/chromium/patch_switch_ld.py */\n"
@@ -60,9 +64,9 @@ def main() -> int:
                 "\t\t. = ALIGN(8);\n"
                 "\t} :data\n\n")
             src = src.replace(anchor, moved + anchor, 1)
-            sys.stderr.write("moved .rodata into the data segment\n")
+            sys.stderr.write("moved .rodata into the data segment (before bss)\n")
         else:
-            sys.stderr.write("warning: __bss_start__ anchor not found\n")
+            sys.stderr.write("warning: .tdata anchor not found\n")
 
     open(sys.argv[2], "w").write(src)
     sys.stderr.write("wrote %s\n" % sys.argv[2])
