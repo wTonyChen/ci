@@ -18,8 +18,11 @@ extern "C" {
 // _init/_fini come from crti.o now that we link through switch.specs; defining
 // them here would be a duplicate definition.
 
-// newlib has memalign() but not POSIX posix_memalign().
-int posix_memalign(void** memptr, size_t alignment, size_t size) {
+// newlib has memalign() but not POSIX posix_memalign(). Mark it weak: when the
+// binary also links Chromium's partition_alloc, PA's strong definition wins and
+// the two do not clash at link time.
+__attribute__((weak)) int posix_memalign(void** memptr, size_t alignment,
+                                         size_t size) {
   if (alignment < sizeof(void*) || (alignment & (alignment - 1)) != 0) {
     return EINVAL;
   }
