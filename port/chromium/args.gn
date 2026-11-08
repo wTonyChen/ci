@@ -25,9 +25,12 @@ use_custom_libcxx = false
 use_thin_lto = false
 clang_use_chrome_plugins = false
 
-# Deliberately NOT set: use_lld. The host toolchain needs lld (thin archives
-# produced with -S have no symbol index); leaving it at its default keeps lld
-# for the host and costs the target nothing (GCC links with its own ld).
+# The target is linked by devkitA64's own gcc driver + switch.specs (that is how
+# the working devkitPro examples are linked). Chromium adds lld-only flags
+# (-fuse-ld=lld, --icf=all) whenever use_lld is true, and GNU ld rejects them, so
+# turn lld off globally. The host toolchain links with the system GNU ld instead;
+# use_thin_archive = false below removes the only reason it needed lld.
+use_lld = false
 treat_warnings_as_errors = false
 
 # Keep the tree small and avoid subsystems that need a real OS.
