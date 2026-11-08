@@ -211,6 +211,11 @@ jobs:
           else
             echo "nx_smoke ELF missing"
           fi
+          echo "=== diag: text relocation report (names the offending symbols) ==="
+          if [ -f "${WORK}/src/out/switch/nx_smoke" ]; then
+            PATH=/opt/devkitpro/devkitA64/bin:$PATH \
+              python3 "${WORK}/src/port/chromium/reloc_report.py" "${WORK}/src/out/switch/nx_smoke" 2>&1 | head -40 || true
+          fi
           echo "=== diag: which config emits --target=aarch64-linux-gnu ==="
           (cd "${WORK}/src" && buildtools/linux64/gn desc out/switch //third_party/zlib cflags_cc --blame 2>/dev/null \
              | grep -B3 -A3 -- '--target=' | head -20) || true
