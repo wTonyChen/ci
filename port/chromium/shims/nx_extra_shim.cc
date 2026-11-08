@@ -15,10 +15,8 @@
 
 extern "C" {
 
-// crti.o/crtbegin.o are not part of our link line (we link -nostdlib), but
-// libnx's startup still references these hooks.
-void _init(void) {}
-void _fini(void) {}
+// _init/_fini come from crti.o now that we link through switch.specs; defining
+// them here would be a duplicate definition.
 
 // newlib has memalign() but not POSIX posix_memalign().
 int posix_memalign(void** memptr, size_t alignment, size_t size) {
@@ -51,13 +49,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
   return n;
 }
 
-ssize_t writev(int fd, const void* iov, int iovcnt) {
-  (void)fd;
-  (void)iov;
-  (void)iovcnt;
-  errno = ENOSYS;
-  return -1;
-}
+// writev() lives in posix_shim.cc; keep it there only.
 
 long sysconf(int name) {
   switch (name) {
