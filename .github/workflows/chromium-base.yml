@@ -64,20 +64,6 @@ jobs:
           /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc --version | head -1
           ls -l /opt/devkitpro/libnx/lib/libnx.a /opt/devkitpro/libnx/switch.ld 2>/dev/null | cut -c1-95
 
-      - name: build probe_mmap with the IMAGE libnx (known-good reference)
-        run: |
-          set +e
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitA64
-          sudo cp -a /opt/devkitpro/libnx /opt/libnx-image
-          echo "--- image libnx backed up ---"
-          cd "$GITHUB_WORKSPACE/probes"
-          make -s PROBE=mmap 2>&1 | tail -5
-          echo "=== probe_mmap (image libnx) make rc=$? ==="
-          ls -l probe_mmap.nro 2>/dev/null
-          cp -f probe_mmap.nro /tmp/probe_mmap_image.nro 2>/dev/null
-          exit 0
-
       - name: build+install libnx from source (firmware 23.0.0 support)
         run: |
           # The docker image's libnx is from Feb 2026; FW 23.0.0 (Sep 2026)
@@ -92,20 +78,6 @@ jobs:
           sudo env DEVKITPRO=/opt/devkitpro DEVKITARM=/opt/devkitpro/devkitA64 \
             make install 2>&1 | tail -4
           ls -l /opt/devkitpro/libnx/lib/libnx.a /opt/devkitpro/libnx/switch.ld
-
-      - name: build probe_mmap with the NEW (source-built) libnx
-        run: |
-          set +e
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitA64
-          cd "$GITHUB_WORKSPACE/probes"
-          make -s clean >/dev/null 2>&1
-          rm -f probe_mmap.nro
-          make -s PROBE=mmap 2>&1 | tail -5
-          echo "=== probe_mmap (new libnx) make rc=$? ==="
-          ls -l probe_mmap.nro 2>/dev/null
-          cp -f probe_mmap.nro /tmp/probe_mmap_new.nro 2>/dev/null
-          exit 0
 
       - name: gclient sync chromium (no history)
         run: |
@@ -280,91 +252,6 @@ jobs:
             echo "elf2nro not available or ELF missing"
           fi
           exit 0
-
-      - name: build reference NRO with devkitPro GCC (control sample)
-        run: |
-          set +e
-          DKP=/opt/devkitpro
-          export DEVKITPRO=$DKP
-          export DEVKITARM=$DKP/devkitA64
-          SRC="$GITHUB_WORKSPACE/port/chromium/ref_hello.c"
-          cd /tmp
-          $DKP/devkitA64/bin/aarch64-none-elf-gcc \
-            -specs=$DKP/libnx/switch.specs \
-            -I$DKP/libnx/include \
-            -g -O2 -ffunction-sections \
-            -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE \
-            -Wl,-z,notext \
-            -o /tmp/ref_hello.elf "$SRC" \
-            -L$DKP/libnx/lib -lnx
-          rc=$?
-          echo "=== ref gcc rc=$rc ==="
-          ls -l /tmp/ref_hello.elf 2>/dev/null
-          if [ $rc -eq 0 ]; then
-            $DKP/tools/bin/nacptool --create "ref_hello" "devkitPro" "1.0" /tmp/ref_hello.nacp 2>&1 | tail -2
-            $DKP/tools/bin/elf2nro /tmp/ref_hello.elf /tmp/ref_hello.nro --icon=$DKP/libnx/default_icon.jpg --nacp=/tmp/ref_hello.nacp 2>&1 | tail -3
-            ls -l /tmp/ref_hello.nro 2>/dev/null
-          fi
-          exit 0
-
-      - name: build devkitPro hello-world example (canonical control)
-        run: |
-          set +e
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitA64
-          git clone --depth 1 https://github.com/switchbrew/switch-examples.git \
-            /tmp/switch-examples
-          cd /tmp/switch-examples/graphics/printing/hello-world
-          make -j4 2>&1 | tail -8
-          echo "=== example make rc=$? ==="
-          ls -l *.nro *.elf 2>/dev/null
-          cp -v *.nro /tmp/hello-world.nro 2>/dev/null
-          exit 0
-
-      - name: upload devkitPro example artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: devkitpro-hello-world
-          path: /tmp/hello-world.nro
-          if-no-files-found: warn
-          retention-days: 14
-
-      - name: build bisect probes via devkitPro Makefile (same path as the official example)
-        run: |
-          set +e
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitA64
-          mkdir -p /tmp/probe-nro
-          cd "$GITHUB_WORKSPACE/probes"
-          for p in exit console printf; do
-            mkdir -p "src/$p"
-            cp "$GITHUB_WORKSPACE/port/chromium/probe_$p.c" "src/$p/main.c"
-            make -s PROBE=$p clean >/dev/null 2>&1
-            make -s PROBE=$p 2>&1 | tail -4
-            echo "probe_$p make rc=$?"
-            cp -f "probe_$p.nro" "/tmp/probe-nro/probe_$p.nro" 2>/dev/null
-          done
-          ls -l /tmp/probe-nro/*.nro 2>/dev/null
-          exit 0
-
-      - name: upload bisect probes artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bisect-probes
-          path: /tmp/probe-nro/*.nro
-          if-no-files-found: warn
-          retention-days: 14
-
-      - name: upload reference NRO artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ref_hello-nro
-          path: /tmp/ref_hello.nro
-          if-no-files-found: warn
-          retention-days: 14
 
       - name: upload nx_smoke ELF (for offline analysis)
         if: always()
