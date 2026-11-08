@@ -247,14 +247,6 @@ jobs:
             (cd "${WORK}/src/out/switch" && ninja -t commands obj/third_party/zlib/zlib/crc32.o 2>/dev/null | tail -1) \
               | tr ' ' '\n' | grep -E '^-f|^-m|target=' | head -20 || true
           fi
-          echo "=== diag: relink WITHOUT -z notext to list text relocations ==="
-          if [ -d "${WORK}/src/out/switch" ]; then
-            (cd "${WORK}/src/out/switch" && ninja -t commands nx_smoke 2>/dev/null | tail -1) > /tmp/linkcmd.txt
-            sed 's/-Wl,-z,notext//g' /tmp/linkcmd.txt > /tmp/linkcmd-notext.sh
-            echo "--- lld output without notext (names the offending objects) ---"
-            (cd "${WORK}/src/out/switch" && bash /tmp/linkcmd-notext.sh 2>&1 | head -40) || true
-            echo "--- end ---"
-          fi
           echo "=== M4: package NRO ==="
           echo "ELF=$ELF"; ls -l "$ELF" 2>&1 | head -1
           echo "--- devkitpro tools ---"; ls -l /opt/devkitpro/tools/bin/ 2>&1 | head -8
