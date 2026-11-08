@@ -126,6 +126,12 @@ executable("nx_smoke") {
   configs += [ ":nx_link" ]
 }
 
+# Same program as the devkitPro hello-world example, but built by Chromium.
+executable("nx_hello") {
+  sources = [ "//port/chromium/hello_main.cc" ]
+  configs += [ ":nx_link" ]
+}
+
 group("gn_all") {
   deps = [ "//base:base" ]
 }
