@@ -95,6 +95,9 @@ config("nx_link") {
     "-Wl,-Map=nx_smoke.map",
   ]
   libs = [
+    # //base is C++: it needs the devkitA64 C++ runtime before libnx.
+    "stdc++",
+    "supc++",
     "nx",
     "m",
   ]
@@ -117,6 +120,13 @@ executable("nx_smoke") {
 # Same program as the devkitPro hello-world example, but built by Chromium.
 executable("nx_hello") {
   sources = [ "//port/chromium/hello_main.cc" ]
+  configs += [ ":nx_link" ]
+}
+
+# M2: //base linked into a real binary.
+executable("nx_base_smoke") {
+  sources = [ "//port/chromium/base_smoke_main.cc" ]
+  deps = [ "//base" ]
   configs += [ ":nx_link" ]
 }
 
