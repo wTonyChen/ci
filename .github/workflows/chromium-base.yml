@@ -176,6 +176,13 @@ jobs:
           (cd "${WORK}/src/out/switch" && ninja -t targets all 2>/dev/null | grep -c 'nx_smoke' ;             ninja -t targets all 2>/dev/null | grep nx_smoke | head -5)
           echo "--- explicit nx_smoke build (verbose tail) ---"
           (cd "${WORK}/src/out/switch" && timeout 1200 ninja -v nx_smoke 2>&1 | tail -25)
+          echo "--- ninja target query for ./nx_smoke ---"
+          (cd "${WORK}/src/out/switch" && grep -n '^build ./nx_smoke' build.ninja | head -3 ; \
+            ninja -t query ./nx_smoke 2>&1 | head -10)
+          echo "--- build it explicitly by output name ---"
+          (cd "${WORK}/src/out/switch" && timeout 1200 ninja -v ./nx_smoke 2>&1 | tail -20)
+          echo "--- ls any nx_smoke file ---"
+          ls -l "${WORK}/src/out/switch" | grep -i 'nx_smoke' || echo "(no nx_smoke in out/switch)"
           echo "--- out/switch contents ---"
           ls -l "${WORK}/src/out/switch" 2>/dev/null | head -12
           echo "--- ninja.log tail (link errors live here) ---"
