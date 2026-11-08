@@ -92,11 +92,13 @@ config("nx_link") {
   # empty stub archives instead of failing the link.
   _stubs = rebase_path("//port/chromium/stub_libs", root_build_dir)
 
-  ldflags = [ "-specs=${_dkp}/switch.specs" ]
-  lib_dirs = [
-    "${_dkp}/lib",
-    "${_dka}/aarch64-none-elf/lib",
-    _stubs,
+  # -L is order-independent, so it stays in ldflags; the libraries themselves
+  # must come after the objects (GN appends `libs` there).
+  ldflags = [
+    "-specs=${_dkp}/switch.specs",
+    "-L${_dkp}/lib",
+    "-L${_dka}/aarch64-none-elf/lib",
+    "-L${_stubs}",
   ]
   libs = [
     "nx",
