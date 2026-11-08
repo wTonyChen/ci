@@ -192,6 +192,29 @@ jobs:
           fi
           exit 0
 
+      - name: build devkitPro hello-world example (canonical control)
+        run: |
+          set +e
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitA64
+          git clone --depth 1 https://github.com/switchbrew/switch-examples.git \
+            /tmp/switch-examples
+          cd /tmp/switch-examples/graphics/printing/hello-world
+          make -j4 2>&1 | tail -8
+          echo "=== example make rc=$? ==="
+          ls -l *.nro *.elf 2>/dev/null
+          cp -v *.nro /tmp/hello-world.nro 2>/dev/null
+          exit 0
+
+      - name: upload devkitPro example artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devkitpro-hello-world
+          path: /tmp/hello-world.nro
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: build bisect probes (exit / console / printf)
         run: |
           set +e
