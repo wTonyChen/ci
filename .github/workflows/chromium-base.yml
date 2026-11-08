@@ -192,6 +192,37 @@ jobs:
           fi
           exit 0
 
+      - name: build bisect probes (exit / console / printf)
+        run: |
+          set +e
+          DKP=/opt/devkitpro
+          export DEVKITPRO=$DKP DEVKITARM=$DKP/devkitA64
+          mkdir -p /tmp/probes
+          for p in exit console printf; do
+            SRC="$GITHUB_WORKSPACE/port/chromium/probe_$p.c"
+            $DKP/devkitA64/bin/aarch64-none-elf-gcc \
+              -specs=$DKP/libnx/switch.specs -I$DKP/libnx/include \
+              -Wl,-z,notext -O2 -o /tmp/probes/probe_$p.elf "$SRC" \
+              -L$DKP/libnx/lib -lnx
+            echo "probe_$p gcc rc=$?"
+            if [ -f /tmp/probes/probe_$p.elf ]; then
+              $DKP/tools/bin/nacptool --create "probe_$p" "Chromium-NX" "1.0" /tmp/probes/probe_$p.nacp >/dev/null 2>&1
+              $DKP/tools/bin/elf2nro /tmp/probes/probe_$p.elf /tmp/probes/probe_$p.nro \
+                --icon=$DKP/libnx/default_icon.jpg --nacp=/tmp/probes/probe_$p.nacp 2>&1 | tail -2
+            fi
+          done
+          ls -l /tmp/probes/*.nro 2>/dev/null
+          exit 0
+
+      - name: upload bisect probes artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bisect-probes
+          path: /tmp/probes/*.nro
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: upload reference NRO artifact
         if: always()
         uses: actions/upload-artifact@v4
