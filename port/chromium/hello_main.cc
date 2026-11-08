@@ -1,0 +1,19 @@
+// Minimal Chromium-build-system hello: same shape as the devkitPro example that
+// is known to run on hardware (consoleInit + printf + consoleExit), but compiled
+// and linked through our GN/ninja setup. If this crashes while the devkitPro
+// hello-world.nro runs, the difference is in *our* toolchain flags, not in the
+// Chromium code.
+#include <stdio.h>
+
+#include <switch.h>
+
+int main(int argc, char** argv) {
+  (void)argc;
+  (void)argv;
+  consoleInit(NULL);
+  printf("nx_hello from Chromium's build system\n");
+  consoleUpdate(NULL);
+  svcSleepThread(3000000000ULL);
+  consoleExit(NULL);
+  return 0;
+}
