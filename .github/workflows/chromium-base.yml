@@ -211,6 +211,11 @@ jobs:
           else
             echo "nx_smoke ELF missing"
           fi
+          echo "=== diag: actual compile flags for a target object ==="
+          if [ -d "${WORK}/src/out/switch" ]; then
+            (cd "${WORK}/src/out/switch" && ninja -t commands obj/third_party/zlib/zlib/crc32.o 2>/dev/null | tail -1) \
+              | tr ' ' '\n' | grep -E '^-f|^-m|target=' | head -20 || true
+          fi
           echo "=== diag: relink WITHOUT -z notext to list text relocations ==="
           if [ -d "${WORK}/src/out/switch" ]; then
             (cd "${WORK}/src/out/switch" && ninja -t commands nx_smoke 2>/dev/null | tail -1) > /tmp/linkcmd.txt
