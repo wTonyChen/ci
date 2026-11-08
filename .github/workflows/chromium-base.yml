@@ -243,6 +243,8 @@ jobs:
             echo "--- end ---"
           fi
           echo "=== M4: package NRO ==="
+          echo "ELF=$ELF"; ls -l "$ELF" 2>&1 | head -1
+          echo "--- devkitpro tools ---"; ls -l /opt/devkitpro/tools/bin/ 2>&1 | head -8
           if [ -f "$ELF" ] && [ -x /opt/devkitpro/tools/bin/elf2nro ]; then
             # Application-mode launches read the NACP; generate one so Sphaira /
             # hbmenu have proper title metadata.
@@ -336,6 +338,15 @@ jobs:
         with:
           name: ref_hello-nro
           path: /tmp/ref_hello.nro
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: upload nx_smoke ELF (for offline analysis)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nx_smoke-elf
+          path: work/src/out/switch/nx_smoke
           if-no-files-found: warn
           retention-days: 14
 
