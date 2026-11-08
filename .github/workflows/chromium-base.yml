@@ -253,6 +253,13 @@ jobs:
             (cd "${WORK}/src/out/switch" && ninja -t commands obj/third_party/zlib/zlib/crc32.o 2>/dev/null | tail -1) \
               | tr ' ' '\n' | grep -E '^-f|^-m|target=' | head -20 || true
           fi
+          echo "=== diag: did the link pull libsysbase/iosupport.o? ==="
+          if [ -f "${WORK}/src/out/switch/nx_smoke.map" ]; then
+            grep -n 'iosupport' "${WORK}/src/out/switch/nx_smoke.map" | head -5 || true
+            grep -n 'dotab_stdnull' "${WORK}/src/out/switch/nx_smoke.map" | head -3 || true
+          else
+            echo "(no map file)"
+          fi
           echo "=== M4: package NRO ==="
           echo "ELF=$ELF"; ls -l "$ELF" 2>&1 | head -1
           echo "--- devkitpro tools ---"; ls -l /opt/devkitpro/tools/bin/ 2>&1 | head -8
