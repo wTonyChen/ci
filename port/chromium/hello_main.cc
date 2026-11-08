@@ -12,8 +12,21 @@ int main(int argc, char** argv) {
   (void)argv;
   consoleInit(NULL);
   printf("nx_hello from Chromium's build system\n");
+  printf("press + / - / A to exit\n");
   consoleUpdate(NULL);
-  svcSleepThread(3000000000ULL);
+
+  PadState pad;
+  padInitializeDefault(&pad);
+  while (appletMainLoop()) {
+    padUpdate(&pad);
+    if (padGetButtonsDown(&pad) &
+        (HidNpadButton_Plus | HidNpadButton_Minus | HidNpadButton_A)) {
+      break;
+    }
+    consoleUpdate(NULL);
+    svcSleepThread(50000000ULL);
+  }
+
   consoleExit(NULL);
   return 0;
 }
