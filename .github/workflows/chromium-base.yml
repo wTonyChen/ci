@@ -161,6 +161,9 @@ jobs:
 
       - name: ninja base
         run: |
+          # switch.specs resolves the linker script via getenv(DEVKITPRO).
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitA64
           cd "$WORK/src"
           [ -d out/switch ] || { echo "no out/switch (gn gen failed)"; exit 0; }
           set +e
