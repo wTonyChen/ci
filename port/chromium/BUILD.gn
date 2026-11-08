@@ -78,19 +78,25 @@ config("switch_config") {
 # libnx's switch.ld supplies the memory layout and the entry point (_start).
 # ---------------------------------------------------------------------------
 config("nx_link") {
-  # Link exactly the way the devkitPro examples are linked: their gcc driver with
-  # switch.specs, and NOTHING else. switch.specs already supplies the whole
-  # --start-group (libc, libsysbase, libm, libstdc++, libsupc++, libnx, libgcc)
-  # in the order newlib expects. Adding our own -lnx/-lm ahead of that group
-  # changes symbol resolution and pulled extra libsysbase objects (iosupport.o,
-  # whose const stdio devoptab carries relocations that libnx's __nx_dynamic
-  # then writes into a read-only segment -> data abort / AMS FATAL).
+  # Link the way the devkitPro examples do: devkitA64's gcc driver + switch.specs.
+  # -L is order-independent and may live in ldflags; the libraries themselves must
+  # go in `libs` (the toolchain appends them after the objects) because GNU ld is
+  # single-pass. devkitA64 has no libatomic/libdl/librt, hence the stub dir.
+  _dka = rebase_path("//third_party/devkitA64", root_build_dir)
   _dkp = rebase_path("//third_party/libnx", root_build_dir)
   _stubs = rebase_path("//port/chromium/stub_libs", root_build_dir)
   ldflags = [
     "-specs=${_dkp}/switch.specs",
+    "-L${_dkp}/lib",
+    "-L${_dka}/aarch64-none-elf/lib",
     "-L${_stubs}",
+    "-Wl,-z,notext",
+    "-Wl,-z,nopack-relative-relocs",
     "-Wl,-Map=nx_smoke.map",
+  ]
+  libs = [
+    "nx",
+    "m",
   ]
 }
 
