@@ -45,15 +45,15 @@ namespace rust_allocator_internal {
 unsigned char* alloc(size_t size, size_t align) {
   void* p = nullptr;
   if (align <= sizeof(void*)) {
-    p = malloc(size == 0 ? 1 : size);
+    p = ::malloc(size == 0 ? 1 : size);
   } else {
-    p = memalign(align, size == 0 ? 1 : size);
+    p = ::memalign(align, size == 0 ? 1 : size);
   }
   return static_cast<unsigned char*>(p);
 }
 
 void dealloc(unsigned char* p, size_t /*size*/, size_t /*align*/) {
-  free(p);
+  ::free(p);
 }
 
 unsigned char* realloc(unsigned char* p, size_t old_size, size_t align,
@@ -68,7 +68,7 @@ unsigned char* realloc(unsigned char* p, size_t old_size, size_t align,
   // devkitA64's realloc cannot honour a stronger alignment; fall back to
   // allocate-copy-free when the caller asked for one.
   if (align <= sizeof(void*)) {
-    return static_cast<unsigned char*>(realloc(p, new_size));
+    return static_cast<unsigned char*>(::realloc(p, new_size));
   }
   unsigned char* q = alloc(new_size, align);
   if (q != nullptr) {
