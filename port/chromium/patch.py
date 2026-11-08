@@ -290,4 +290,25 @@ patch("build/config/compiler_cpu_abi.gn",
       '      cpu_abi_cflags += [ "--target=aarch64-none-elf" ]\n',
       "--target=aarch64-none-elf")
 
+# 13) ifunc is unusable on the Switch: partition_alloc resolves GetAccessFlags
+#     through `__attribute__((ifunc(...)))` when it thinks the CPU may have MTE
+#     or BTI. libnx has no ifunc support, so the symbol ends up undefined at link
+#     time (13 references, all `partition_alloc::internal::GetAccessFlags`).
+#     Fall back to the plain, non-ifunc definition.
+patch("base/allocator/partition_allocator/src/partition_alloc/"
+      "page_allocator_internals_posix.cc",
+      'int GetAccessFlags(PageAccessibilityConfiguration accessibility)\n'
+      '#if defined(NEEDS_HANDLING_OF_HW_CAPABILITIES)\n'
+      '    __attribute__((ifunc("ResolveGetAccessFlags")));\n'
+      '#else\n'
+      '{\n'
+      '  return GetAccessFlags<false, false>(accessibility);\n'
+      '}\n'
+      '#endif\n',
+      'int GetAccessFlags(PageAccessibilityConfiguration accessibility) {\n'
+      '  // Chromium-NX: no ifunc on Horizon; the runtime never has MTE/BTI.\n'
+      '  return GetAccessFlags<false, false>(accessibility);\n'
+      '}\n',
+      "no ifunc on Horizon")
+
 print("all chromium patches applied")
