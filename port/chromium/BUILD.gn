@@ -125,7 +125,17 @@ executable("nx_hello") {
 
 # M2: //base linked into a real binary.
 executable("nx_base_smoke") {
-  sources = [ "//port/chromium/base_smoke_main.cc" ]
+  sources = [
+    "//port/chromium/base_smoke_main.cc",
+    # //base needs the same Horizon POSIX/allocator layer as nx_smoke, otherwise
+    # getpagesize()/mmap() and friends are undefined at link time.
+    "//port/chromium/shims/mmap_shim.cc",
+    "//port/chromium/shims/posix_shim.cc",
+    "//port/chromium/shims/nx_extra_shim.cc",
+    # partition_alloc emits MTE helper calls on this target but not their
+    # definitions; they are identity functions without MTE hardware.
+    "//port/chromium/pa_stubs.cc",
+  ]
   deps = [ "//base" ]
   configs += [ ":nx_link" ]
 }
