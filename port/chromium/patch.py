@@ -251,7 +251,7 @@ patch("build/config/compiler/BUILD.gn",
       # target (devkitA64 ld) are GNU ld, which refuses a thin archive without
       # a symbol index. Always keep the index.
       '    arflags = [ "-T", "-s" ]\n',
-      "thin archive without")
+      "Chromium-NX: always keep the archive symbol index")
 
 # 11) Drop dynamic symbol exports on the Switch target.
 #     Chromium adds `-rdynamic` (config "export_dynamic") plus a pile of
