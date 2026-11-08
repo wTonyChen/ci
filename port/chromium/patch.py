@@ -286,16 +286,12 @@ patch("build/config/sanitizers/BUILD.gn",
       '      ldflags = [\n')
 
 patch("build/config/compiler_cpu_abi.gn",
-      '  } else if (current_cpu == "arm64") {\n'
-      '    if (is_clang && !is_android && !is_fuchsia && !is_chromeos_device) {\n'
       '      cpu_abi_cflags += [ "--target=aarch64-linux-gnu" ]\n'
-      '      cpu_abi_ldflags += [ "--target=aarch64-linux-gnu" ]\n'
-      '    }\n',
-      '  } else if (current_cpu == "arm64") {\n'
-      '    # Chromium-NX: this build targets bare-metal AArch64 (devkitA64), not\n'
-      '    # linux-gnu. --target is supplied by //:switch_config for compilation;\n'
-      '    # the link is driven by devkitA64 gcc, which rejects --target outright.\n'
-      '  }\n',
-      "Chromium-NX: this build targets bare-metal AArch64")
+      '      cpu_abi_ldflags += [ "--target=aarch64-linux-gnu" ]\n',
+      '      # Chromium-NX: compile for bare-metal AArch64 (devkitA64), not\n'
+      '      # linux-gnu. The link is driven by devkitA64 gcc, which has no\n'
+      '      # --target switch at all, so drop it from the ldflags.\n'
+      '      cpu_abi_cflags += [ "--target=aarch64-none-elf" ]\n',
+      "--target=aarch64-none-elf")
 
 print("all chromium patches applied")
