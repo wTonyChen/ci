@@ -141,7 +141,7 @@ jobs:
           sudo cp "$WORK/src/port/chromium/switch.ld" /opt/devkitpro/libnx/switch.ld
           echo "--- installed linker script ---"
           grep -c 'PT_TLS' /opt/devkitpro/libnx/switch.ld || true
-          grep -c 'Chromium-NX: writable' /opt/devkitpro/libnx/switch.ld || true
+          grep -c 'Read | Write (Chromium-NX)' /opt/devkitpro/libnx/switch.ld || true
           echo "--- patching BUILDCONFIG (wire switch_config into default configs) ---"
           cd "$WORK/src" && python3 port/chromium/patch.py
           chmod +x port/chromium/ld_wrapper.py port/chromium/patch.py 2>/dev/null || true
