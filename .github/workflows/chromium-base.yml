@@ -204,6 +204,8 @@ jobs:
             /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -rW "$ELF" 2>/dev/null | awk '/R_AARCH64/ {print $3}' | sort | uniq -c | head -10 || true
             echo "--- TEXTREL check (must be empty) ---"
             /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -dW "$ELF" | grep -i textrel || echo "no TEXTREL flag"
+            echo "--- text-reloc sections (where are the 408 relocs?) ---"
+            /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -rW "$ELF" 2>/dev/null | grep -B2 'R_AARCH64_ABS64' | head -20 || true
             echo "--- reloc count in .text ---"
             /opt/devkitpro/devkitA64/aarch64-none-elf/bin/readelf -rW "$ELF" 2>/dev/null | grep -c 'R_AARCH64' || true
           else
