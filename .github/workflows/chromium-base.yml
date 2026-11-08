@@ -35,8 +35,14 @@ jobs:
           df -h / | tail -1
           docker pull devkitpro/devkita64:latest
           sudo mkdir -p /opt/devkitpro
+          # Upgrade the packages inside the image first: the published tag is
+          # often months old (it shipped GCC 15.2 from Feb 2026 while FW 23.0.0
+          # era homebrew needs the GCC 16/newlib toolchain + current libnx).
           docker run --rm -v /opt/devkitpro:/host-dkp devkitpro/devkita64:latest \
-            cp -a /opt/devkitpro/. /host-dkp/
+            bash -lc 'pacman -Syu --noconfirm 2>&1 | tail -6; cp -a /opt/devkitpro/. /host-dkp/'
+          echo "--- toolchain after upgrade ---"
+          /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc --version | head -1
+          ls -l /opt/devkitpro/libnx/lib/libnx.a 2>/dev/null | cut -c1-90
           /opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc --version | head -1
           echo "--- devkitPro package versions (libnx matters for firmware support) ---"
           docker run --rm devkitpro/devkita64:latest pacman -Q 2>/dev/null | grep -iE 'libnx|devkita64|devkit-tools|switch-tools' || true
