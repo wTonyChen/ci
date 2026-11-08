@@ -17,11 +17,15 @@ gcc_toolchain("devkita64") {
                               root_build_dir)
   _ar = rebase_path("//third_party/devkitA64/bin/aarch64-none-elf-ar",
                     root_build_dir)
+  # Link with devkitA64's own driver so switch.specs applies (this is exactly how
+  # the devkitPro examples are linked -- and those run on FW 23.0.0).
+  _ld = rebase_path("//third_party/devkitA64/bin/aarch64-none-elf-gcc",
+                    root_build_dir)
 
   cc = "${_clang_prefix}/clang"
   cxx = "${_clang_prefix}/clang++"
   ar = _ar
-  ld = cxx
+  ld = _ld
   readelf = "${_ar}c"  # unused by the build; kept to satisfy the template
   nm = "${_ar}c"
 
@@ -30,7 +34,7 @@ gcc_toolchain("devkita64") {
     current_os = "linux"
 
     is_clang = true
-    use_lld = true
+    use_lld = false
 
     # Target uses devkitA64's libstdc++ (Chromium's libc++ needs a platform
     # layer we do not have on Horizon yet).
