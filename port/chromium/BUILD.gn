@@ -84,10 +84,14 @@ config("nx_link") {
   # one that produces the hello-world binary which does run on hardware.
   _dka = rebase_path("//third_party/devkitA64", root_build_dir)
   _dkp = rebase_path("//third_party/libnx", root_build_dir)
+  # Chromium links -latomic/-ldl/-lrt; Horizon has none of them, so point at the
+  # empty stub archives instead of failing the link.
+  _stubs = rebase_path("//port/chromium/stub_libs", root_build_dir)
   ldflags = [
     "-specs=${_dkp}/switch.specs",
     "-L${_dka}/aarch64-none-elf/lib",
     "-L${_dkp}/lib",
+    "-L${_stubs}",
     "-lnx",
     "-lm",
   ]
