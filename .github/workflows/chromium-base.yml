@@ -161,9 +161,11 @@ jobs:
 
       - name: ninja base
         run: |
-          # switch.specs resolves the linker script via getenv(DEVKITPRO).
+          # switch.specs resolves the linker script via getenv(DEVKITPRO); the
+          # devkitA64 gcc driver also looks up its own ld/collect2 on PATH.
           export DEVKITPRO=/opt/devkitpro
           export DEVKITARM=/opt/devkitpro/devkitA64
+          export PATH=/opt/devkitpro/devkitA64/bin:$PATH
           cd "$WORK/src"
           [ -d out/switch ] || { echo "no out/switch (gn gen failed)"; exit 0; }
           set +e
