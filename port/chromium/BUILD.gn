@@ -96,6 +96,12 @@ config("nx_link") {
   # must come after the objects (GN appends `libs` there).
   ldflags = [
     "-specs=${_dkp}/switch.specs",
+    # Temporary: let the link through even if some object still needs a text
+    # relocation, so we can inspect the ELF and see exactly which symbol it is.
+    "-Wl,-z,notext",
+    # Emit plain RELA relocations instead of packed RELR: readelf then names the
+    # symbol behind every dynamic relocation, which is what we need to debug.
+    "-Wl,-z,nopack-relative-relocs",
     "-L${_dkp}/lib",
     "-L${_dka}/aarch64-none-elf/lib",
     "-L${_stubs}",
