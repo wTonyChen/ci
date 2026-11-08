@@ -78,53 +78,18 @@ config("switch_config") {
 # libnx's switch.ld supplies the memory layout and the entry point (_start).
 # ---------------------------------------------------------------------------
 config("nx_link") {
-  _devkita64 = rebase_path("//third_party/devkitA64/aarch64-none-elf",
-                           root_build_dir)
-  _libnx = rebase_path("//third_party/libnx", root_build_dir)
-  # Chromium's Linux link config pulls in -latomic/-ldl/-lrt; Horizon has no such
-  # libraries, so point the search path at our empty archives.
-  _stubs = rebase_path("//port/chromium/stub_libs", root_build_dir)
-
+  # Link exactly like the devkitPro examples do: their own driver + switch.specs.
+  # Everything we hand-rolled before (lld, custom switch.ld, --start-group order,
+  # -z notext) is replaced by the specs file that ships with libnx -- the same
+  # one that produces the hello-world binary which does run on hardware.
+  _dka = rebase_path("//third_party/devkitA64", root_build_dir)
+  _dkp = rebase_path("//third_party/libnx", root_build_dir)
   ldflags = [
-    "-nostdlib",
-    # libnx's switch.ld/switch.specs build a PIE with libnx's own _start.
-    "-pie",
-    "-Wl,--no-dynamic-linker",
-    # lld understands the clang objects we produce; the TLS-aware linker script
-    # (//port/chromium/switch.ld) keeps it happy about thread-local storage.
-    "-fuse-ld=lld",
-    # If this is NOT needed the objects are clean; keep it only as a safety net
-    # and watch the TEXTREL diagnostics in the CI log.
-    "-Wl,-z,notext",
-    # Our own copy of libnx's switch.ld that declares a PT_TLS segment (lld
-    # requires it; GNU ld tolerated the original, but lld understands LLVM
-    # objects, which is what we produce).
-    "-Wl,-T",
-    rebase_path("//port/chromium/switch.ld", root_build_dir),
-    "-L",
-    "${_devkita64}/lib",
-    "-L",
-    "${_libnx}/lib",
-    "-L",
-    "${_stubs}",
-    "-Wl,--gc-sections",
-    # libbase.a brings partition_alloc's malloc/new/free replacements; newlib's
-    # libc.a and libstdc++ also define them. Chromium normally relies on the C
-    # library allowing overrides; with archives both copies get pulled in, so
-    # accept the duplicate and keep the first (partition_alloc) definition.
-    "-Wl,--allow-multiple-definition",
-    "-Wl,--start-group",
-    "${_devkita64}/lib/libc.a",
-    # libsysbase.a is devkitA64's newlib syscall layer (_write_r/_exit/...) and
-    # also carries the newlib pthread implementation.
-    "${_devkita64}/lib/libsysbase.a",
-    "${_devkita64}/lib/libm.a",
-    "${_devkita64}/lib/libstdc++.a",
-    "${_devkita64}/lib/libsupc++.a",
-    "${_libnx}/lib/libnx.a",
-    # libgcc.a holds _Unwind_* (C++ unwinder helpers).
-    "${_devkita64}/../lib/gcc/aarch64-none-elf/15.2.0/libgcc.a",
-    "-Wl,--end-group",
+    "-specs=${_dkp}/switch.specs",
+    "-L${_dka}/aarch64-none-elf/lib",
+    "-L${_dkp}/lib",
+    "-lnx",
+    "-lm",
   ]
 }
 
