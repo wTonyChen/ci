@@ -26,3 +26,64 @@ void* TagMemoryRangeRandomlyInternal(void* ptr, size_t /*size*/,
 }
 
 }  // namespace partition_alloc::internal
+
+// ---------------------------------------------------------------------------
+// Rust <-> C++ allocator bridge.
+//
+// Chromium's Rust global allocator calls these four C++ functions. The real
+// implementation lives in //build/rust/allocator, which is only linked together
+// with rustc-driven targets; when a C++ executable links //base, the symbols are
+// left undefined. Provide them on top of the devkitA64 allocator.
+// Declarations: build/rust/allocator/allocator_impls.h
+// ---------------------------------------------------------------------------
+#include <cstdlib>
+#include <malloc.h>
+#include <cstring>
+
+namespace rust_allocator_internal {
+
+unsigned char* alloc(size_t size, size_t align) {
+  void* p = nullptr;
+  if (align <= sizeof(void*)) {
+    p = malloc(size == 0 ? 1 : size);
+  } else {
+    p = memalign(align, size == 0 ? 1 : size);
+  }
+  return static_cast<unsigned char*>(p);
+}
+
+void dealloc(unsigned char* p, size_t /*size*/, size_t /*align*/) {
+  free(p);
+}
+
+unsigned char* realloc(unsigned char* p, size_t old_size, size_t align,
+                       size_t new_size) {
+  if (p == nullptr) {
+    return alloc(new_size, align);
+  }
+  if (new_size == 0) {
+    dealloc(p, old_size, align);
+    return nullptr;
+  }
+  // devkitA64's realloc cannot honour a stronger alignment; fall back to
+  // allocate-copy-free when the caller asked for one.
+  if (align <= sizeof(void*)) {
+    return static_cast<unsigned char*>(realloc(p, new_size));
+  }
+  unsigned char* q = alloc(new_size, align);
+  if (q != nullptr) {
+    std::memcpy(q, p, old_size < new_size ? old_size : new_size);
+    dealloc(p, old_size, align);
+  }
+  return q;
+}
+
+unsigned char* alloc_zeroed(size_t size, size_t align) {
+  unsigned char* p = alloc(size, align);
+  if (p != nullptr) {
+    std::memset(p, 0, size);
+  }
+  return p;
+}
+
+}  // namespace rust_allocator_internal
