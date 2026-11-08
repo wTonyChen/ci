@@ -25,14 +25,15 @@ int main(int argc, char** argv) {
   printf("\n");
   printf("compiled with Chromium's GN/ninja + clang + devkitA64\n");
   printf("\n");
-  printf("press + to exit\n");
+  printf("press + / - / A to exit\n");
   consoleUpdate(NULL);
 
   PadState pad;
   padInitializeDefault(&pad);
   while (appletMainLoop()) {
     padUpdate(&pad);
-    if (padGetButtonsDown(&pad) & HidNpadButton_Plus) {
+    if (padGetButtonsDown(&pad) &
+        (HidNpadButton_Plus | HidNpadButton_Minus | HidNpadButton_A)) {
       break;
     }
     consoleUpdate(NULL);
