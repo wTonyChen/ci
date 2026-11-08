@@ -30,26 +30,39 @@ def main() -> int:
     # switch.specs, and stuffing a PT_TLS phdr into the script makes GNU ld emit
     # overlapping LMAs. GNU ld handles TLS without an explicit program header.
 
-    # --- 2) Make the whole rodata PT_LOAD writable -------------------------
-    # devkitA64's libsysbase has a const stdio devoptab (dotab_stdnull) whose
-    # pointer fields carry R_AARCH64_RELATIVE relocations while living in
-    # .rodata. libnx's __nx_dynamic applies those relocations by writing to the
-    # target address; if the page is read-only that write faults (that was the
-    # AMS FATAL inside __nx_dynamic). Marking the rodata segment RW keeps the
-    # section layout untouched (moving .rodata into the data segment made the
-    # PT_LOADs overlap, which hbloader did not survive).
-    for old, new in (
-        ("\trodata PT_LOAD FLAGS(4) /* Read */;",
-         "\trodata PT_LOAD FLAGS(6) /* Read | Write (Chromium-NX) */;"),
-        ("\trodata PT_LOAD FLAGS(4);",
-         "\trodata PT_LOAD FLAGS(6);"),
-    ):
-        if old in src:
-            src = src.replace(old, new, 1)
-            sys.stderr.write("rodata segment is now writable\n")
-            break
+    # --- 2) Move .rodata into the writable (data) segment -------------------
+    # devkitA64's libsysbase (iosupport.o) has a const stdio devoptab
+    # (dotab_stdnull) whose pointer fields carry R_AARCH64_RELATIVE relocations.
+    # libnx's __nx_dynamic applies those relocations by writing to the target
+    # address, and hbloader maps the NRO's *rodata* segment read-only -- so the
+    # write faults (that is the AMS FATAL inside __nx_dynamic). Keep .rodata in
+    # the data segment instead: libnx reads __bss_start__/__bss_end__ around the
+    # data segment, so the block is placed after .main.tls and before those
+    # symbols, which keeps BSS clearing away from it.
+    rodata_block_start = src.find("\t.rodata :\n")
+    if rodata_block_start < 0:
+        sys.stderr.write("warning: .rodata block not found\n")
     else:
-        sys.stderr.write("warning: rodata PHDR line not found\n")
+        rodata_block_end = src.find("} :rodata", rodata_block_start)
+        if rodata_block_end < 0:
+            sys.stderr.write("warning: .rodata block end not found\n")
+        else:
+            src = (src[:rodata_block_start] +
+                   src[rodata_block_end + len("} :rodata\n"):])
+
+        anchor = "\tPROVIDE_HIDDEN( __bss_start__ = ADDR(.bss) );"
+        if anchor in src:
+            moved = (
+                "\t/* Chromium-NX: writable, see port/chromium/patch_switch_ld.py */\n"
+                "\t.rodata :\n"
+                "\t{\n"
+                "\t\t*(.rodata .rodata.* .gnu.linkonce.r.*)\n"
+                "\t\t. = ALIGN(8);\n"
+                "\t} :data\n\n")
+            src = src.replace(anchor, moved + anchor, 1)
+            sys.stderr.write("moved .rodata into the data segment\n")
+        else:
+            sys.stderr.write("warning: __bss_start__ anchor not found\n")
 
     open(sys.argv[2], "w").write(src)
     sys.stderr.write("wrote %s\n" % sys.argv[2])
