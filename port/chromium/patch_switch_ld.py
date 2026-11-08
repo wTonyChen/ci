@@ -26,55 +26,30 @@ def main() -> int:
 
     src = open(sys.argv[1]).read()
 
-    # --- 1) TLS program header (only if not already present) -----------------
-    if "PT_TLS" in src:
-        sys.stderr.write("switch.ld already declares PT_TLS\n")
+    # The lld-specific PT_TLS hack is gone: we link with devkitA64's GNU ld via
+    # switch.specs, and stuffing a PT_TLS phdr into the script makes GNU ld emit
+    # overlapping LMAs. GNU ld handles TLS without an explicit program header.
+
+    # --- 2) Make the whole rodata PT_LOAD writable -------------------------
+    # devkitA64's libsysbase has a const stdio devoptab (dotab_stdnull) whose
+    # pointer fields carry R_AARCH64_RELATIVE relocations while living in
+    # .rodata. libnx's __nx_dynamic applies those relocations by writing to the
+    # target address; if the page is read-only that write faults (that was the
+    # AMS FATAL inside __nx_dynamic). Marking the rodata segment RW keeps the
+    # section layout untouched (moving .rodata into the data segment made the
+    # PT_LOADs overlap, which hbloader did not survive).
+    for old, new in (
+        ("\trodata PT_LOAD FLAGS(4) /* Read */;",
+         "\trodata PT_LOAD FLAGS(6) /* Read | Write (Chromium-NX) */;"),
+        ("\trodata PT_LOAD FLAGS(4);",
+         "\trodata PT_LOAD FLAGS(6);"),
+    ):
+        if old in src:
+            src = src.replace(old, new, 1)
+            sys.stderr.write("rodata segment is now writable\n")
+            break
     else:
-        for anchor in ("\tdata   PT_LOAD FLAGS(6) /* Read | Write */;",
-                       "\tdata PT_LOAD FLAGS(6)"):
-            if anchor in src:
-                src = src.replace(
-                    anchor,
-                    anchor + "\n\ttls    PT_TLS FLAGS(6) /* Chromium-NX: for lld */;",
-                    1)
-                break
-        else:
-            sys.stderr.write("warning: PHDRS data line not found\n")
-
-        def attach(text: str, name: str) -> str:
-            idx = text.find(name)
-            if idx < 0:
-                return text
-            brace = text.find("} :data", idx)
-            if brace >= 0:
-                return (text[:brace] + "} :data :tls" +
-                        text[brace + len("} :data"):])
-            brace = text.find("\n\t}", idx)
-            if brace >= 0:
-                return (text[:brace] + "\n\t} :data :tls" +
-                        text[brace + len("\n\t}"):])
-            return text
-
-        for sec in ("\t.tdata ", "\t.tbss ", "\t.main.tls "):
-            before = src
-            src = attach(src, sec)
-            if src == before:
-                sys.stderr.write("warning: could not attach %s\n" % sec.strip())
-
-    # --- 2) .rodata into the writable segment -------------------------------
-    marker = "\t.rodata :\n"
-    idx = src.find(marker)
-    if idx < 0:
-        sys.stderr.write("warning: .rodata block not found\n")
-    else:
-        end = src.find("} :rodata", idx)
-        if end < 0:
-            sys.stderr.write("warning: .rodata block end not found\n")
-        else:
-            src = (src[:end] +
-                   "} :data  /* Chromium-NX: writable, see patch_switch_ld.py */" +
-                   src[end + len("} :rodata"):])
-            sys.stderr.write("mapped .rodata into the writable segment\n")
+        sys.stderr.write("warning: rodata PHDR line not found\n")
 
     open(sys.argv[2], "w").write(src)
     sys.stderr.write("wrote %s\n" % sys.argv[2])
