@@ -70,6 +70,11 @@ use_mold = false
 # read their index ("archive has no index; run ranlib"). Use regular archives.
 use_thin_archive = false
 
+# AllocToken pulls in absolute-symbol alias objects (alloc_token_aliases*.o) and
+# export-dynamic hints; on a bare-metal PIE they show up as TEXTREL, which the
+# Horizon loader does not patch. It is a sanitizer feature we do not need.
+use_alloc_token = false
+
 # NOTE: Rust stays ENABLED (build/rust/rust_target.gni asserts on it), but M3's
 # smoke target deliberately depends on a pure-C library instead of //base so the
 # link does not drag in Rust std (which needs libunwind). Revisit in M4.
