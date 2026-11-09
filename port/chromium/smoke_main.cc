@@ -28,6 +28,9 @@ int main(int argc, char** argv) {
   printf("press + / - / A to exit\n");
   consoleUpdate(NULL);
 
+  // padGetButtons* only reports anything once hid has been initialised; the
+  // libnx crt0 does not do it for us.
+  hidInitialize();
   PadState pad;
   padInitializeDefault(&pad);
   while (appletMainLoop()) {
