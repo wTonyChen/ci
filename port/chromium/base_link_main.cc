@@ -5,6 +5,14 @@
 
 #include <switch.h>
 
+__attribute__((constructor(101))) static void early_breadcrumb() {
+  consoleInit(NULL);
+  printf("nx_base_link: pre-main init reached\n");
+  printf("(sleeping 3s so this is readable)\n");
+  consoleUpdate(NULL);
+  svcSleepThread(3000000000ULL);
+}
+
 int main(int argc, char** argv) {
   (void)argc;
   (void)argv;
