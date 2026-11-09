@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
   consoleUpdate(NULL);
 
   hidInitialize();
+  padConfigureInput(1, HidNpadStyleSet_NpadStandard);
   PadState pad;
   padInitializeDefault(&pad);
   while (appletMainLoop()) {
