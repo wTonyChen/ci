@@ -311,4 +311,43 @@ patch("base/allocator/partition_allocator/src/partition_alloc/"
       '}\n',
       "no ifunc on Horizon")
 
+# 14) Diagnostic build switch: make partition_alloc's fatal log VISIBLE and
+#     non-fatal. base crashes inside logging::LogMessage::~LogMessage() at the
+#     PA_IMMEDIATE_CRASH() instruction, i.e. a PA CHECK fired -- but PA writes the
+#     message to fd 2, which homebrew never shows. Mirror it to stdout (the
+#     console device) and turn the crash into an infinite loop so the message
+#     stays on screen; the stack-trace path needs libunwind pieces we do not have.
+patch("base/allocator/partition_allocator/src/partition_alloc/"
+      "partition_alloc_base/logging.cc",
+      'void WriteToStderr(const char* data, size_t length) {\n'
+      '  size_t bytes_written = 0;\n',
+      'void WriteToStderr(const char* data, size_t length) {\n'
+      '  // Chromium-NX: fd 2 is invisible in homebrew; mirror to stdout (console).\n'
+      '  std::fwrite(data, 1, length, stdout);\n'
+      '  std::fflush(stdout);\n'
+      '  size_t bytes_written = 0;\n',
+      "fd 2 is invisible in homebrew")
+
+patch("base/allocator/partition_allocator/src/partition_alloc/"
+      "partition_alloc_base/log_message.cc",
+      '#if !PA_BUILDFLAG(OFFICIAL) &&                          \\\n'
+      '    (PA_BUILDFLAG(IS_POSIX) || PA_BUILDFLAG(IS_WIN)) && \\\n'
+      '    !defined(__UCLIBC__) && !PA_BUILDFLAG(IS_AIX)\n',
+      '#if 0  // Chromium-NX: no unwinder/backtrace on Horizon\n',
+      "Chromium-NX: no unwinder/backtrace on Horizon")
+
+patch("base/allocator/partition_allocator/src/partition_alloc/"
+      "partition_alloc_base/log_message.cc",
+      '  if (severity_ == LOGGING_FATAL) {\n'
+      '    PA_IMMEDIATE_CRASH();\n'
+      '  }\n',
+      '  if (severity_ == LOGGING_FATAL) {\n'
+      '    // Chromium-NX diagnostic: keep the message on screen instead of\n'
+      '    // crashing, so the failing PA CHECK is readable on the console.\n'
+      '    for (;;) {\n'
+      '      __asm__ __volatile__("nop");\n'
+      '    }\n'
+      '  }\n',
+      "keep the message on screen instead of")
+
 print("all chromium patches applied")
