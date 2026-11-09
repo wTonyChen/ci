@@ -19,6 +19,12 @@ int main(int argc, char** argv) {
   // libnx crt0 does not do it for us.
   Result hid_rc = hidInitialize();
   printf("hidInitialize rc=0x%08x\n", hid_rc);
+  // hid reports nothing until the supported Npad style set / id list has been
+  // configured; padUpdate() skips any controller whose style_set reads 0.
+  padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+  printf("style set No1=0x%x Handheld=0x%x\n",
+         (unsigned)hidGetNpadStyleSet(HidNpadIdType_No1),
+         (unsigned)hidGetNpadStyleSet(HidNpadIdType_Handheld));
   PadState pad;
   padInitializeDefault(&pad);
 
