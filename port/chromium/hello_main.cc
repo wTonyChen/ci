@@ -17,18 +17,32 @@ int main(int argc, char** argv) {
 
   // padGetButtons* only reports anything once hid has been initialised; the
   // libnx crt0 does not do it for us.
-  hidInitialize();
+  Result hid_rc = hidInitialize();
+  printf("hidInitialize rc=0x%08x\n", hid_rc);
   PadState pad;
   padInitializeDefault(&pad);
+
+  int frame = 0;
   while (appletMainLoop()) {
     padUpdate(&pad);
-    if (padGetButtonsDown(&pad) &
-        (HidNpadButton_Plus | HidNpadButton_Minus | HidNpadButton_A)) {
+    const u64 down = padGetButtonsDown(&pad);
+    const u64 cur = padGetButtons(&pad);
+    if (frame % 30 == 0) {
+      printf("frame %d buttons=0x%llx down=0x%llx\n", frame,
+             (unsigned long long)cur, (unsigned long long)down);
+      consoleUpdate(NULL);
+    }
+    if (down & (HidNpadButton_Plus | HidNpadButton_Minus | HidNpadButton_A)) {
+      printf("exit key seen: down=0x%llx\n", (unsigned long long)down);
+      consoleUpdate(NULL);
       break;
     }
-    consoleUpdate(NULL);
+    frame++;
     svcSleepThread(50000000ULL);
   }
+  printf("loop ended (appletMainLoop false) at frame %d\n", frame);
+  consoleUpdate(NULL);
+  svcSleepThread(2000000000ULL);
 
   consoleExit(NULL);
   return 0;
