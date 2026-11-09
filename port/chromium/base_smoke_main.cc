@@ -8,6 +8,8 @@
 
 #include <switch.h>
 
+extern "C" int nx_console_is_ready;
+
 #include "base/strings/stringprintf.h"
 
 // Breadcrumb: //base has global constructors that may run before main(). If the
@@ -16,6 +18,7 @@
 // can show that libnx init + first console init already worked.
 __attribute__((constructor(0))) static void early_breadcrumb() {
   consoleInit(NULL);
+  nx_console_is_ready = 1;
   printf("nx_base_smoke: pre-main init reached\n");
   printf("(sleeping 3s so this is readable)\n");
   consoleUpdate(NULL);
