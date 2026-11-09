@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
   // padGetButtons* only reports anything once hid has been initialised; the
   // libnx crt0 does not do it for us.
   hidInitialize();
+  padConfigureInput(1, HidNpadStyleSet_NpadStandard);
   PadState pad;
   padInitializeDefault(&pad);
   while (appletMainLoop()) {
