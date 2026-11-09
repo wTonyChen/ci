@@ -5,8 +5,11 @@
 
 #include <switch.h>
 
+extern "C" int nx_console_is_ready;
+
 __attribute__((constructor(0))) static void early_breadcrumb() {
   consoleInit(NULL);
+  nx_console_is_ready = 1;
   printf("nx_base_link: pre-main init reached\n");
   printf("(sleeping 3s so this is readable)\n");
   consoleUpdate(NULL);
