@@ -14,7 +14,7 @@
 // process dies inside them the screen would stay black and we would not know how
 // far it got. A constructor with priority 101 runs before the ordinary ones and
 // can show that libnx init + first console init already worked.
-__attribute__((constructor(101))) static void early_breadcrumb() {
+__attribute__((constructor(0))) static void early_breadcrumb() {
   consoleInit(NULL);
   printf("nx_base_smoke: pre-main init reached\n");
   printf("(sleeping 3s so this is readable)\n");
