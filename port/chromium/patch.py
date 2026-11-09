@@ -319,28 +319,25 @@ patch("base/allocator/partition_allocator/src/partition_alloc/"
 #     stays on screen; the stack-trace path needs libunwind pieces we do not have.
 patch("base/allocator/partition_allocator/src/partition_alloc/"
       "partition_alloc_base/logging.cc",
-      '#include "partition_alloc/partition_alloc_base/posix/eintr_wrapper.h"\n',
-      '#include "partition_alloc/partition_alloc_base/posix/eintr_wrapper.h"\n'
-      '#if defined(__SWITCH__)\n'
-      '#include <switch.h>  // Chromium-NX: lazy console for PA diagnostics\n'
-      '#endif\n',
-      "lazy console for PA diagnostics")
-
-patch("base/allocator/partition_allocator/src/partition_alloc/"
-      "partition_alloc_base/logging.cc",
       'void WriteToStderr(const char* data, size_t length) {\n'
       '  size_t bytes_written = 0;\n',
+      '// Chromium-NX: libnx entry points, declared here instead of including\n'
+      '// <switch.h> (this translation unit is compiled with Chromium warnings).\n'
+      'extern "C" void consoleInit(void*);\n'
+      'extern "C" void consoleUpdate(void*);\n'
+      '\n'
       'void WriteToStderr(const char* data, size_t length) {\n'
       '  // Chromium-NX: fd 2 is invisible in homebrew; mirror to stdout. The console\n'
       '  // may not be initialised yet (PA CHECKs can fire before any constructor),\n'
       '  // so bring it up lazily the first time we have to report something.\n'
       '  static bool nx_console_ready = false;\n'
       '  if (!nx_console_ready) {\n'
-      '    consoleInit(NULL);\n'
+      '    consoleInit(nullptr);\n'
       '    nx_console_ready = true;\n'
       '  }\n'
       '  std::fwrite(data, 1, length, stdout);\n'
       '  std::fflush(stdout);\n'
+      '  consoleUpdate(nullptr);\n'
       '  size_t bytes_written = 0;\n',
       "fd 2 is invisible in homebrew")
 
