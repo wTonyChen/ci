@@ -15,6 +15,10 @@
 
 extern "C" {
 
+// Set to 1 once the program has brought up the libnx console. partition_alloc's
+// logging uses it to decide whether PA CHECK messages can be written on screen.
+int nx_console_is_ready = 0;
+
 // _init/_fini come from crti.o now that we link through switch.specs; defining
 // them here would be a duplicate definition.
 
