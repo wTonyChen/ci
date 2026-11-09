@@ -17,7 +17,9 @@
 __attribute__((constructor(101))) static void early_breadcrumb() {
   consoleInit(NULL);
   printf("nx_base_smoke: pre-main init reached\n");
+  printf("(sleeping 3s so this is readable)\n");
   consoleUpdate(NULL);
+  svcSleepThread(3000000000ULL);
 }
 
 int main(int argc, char** argv) {
@@ -34,6 +36,9 @@ int main(int argc, char** argv) {
   printf("\npress + / - / A to exit\n");
   consoleUpdate(NULL);
 
+  // padGetButtons* only reports anything once hid has been initialised; the
+  // libnx crt0 does not do it for us.
+  hidInitialize();
   PadState pad;
   padInitializeDefault(&pad);
   while (appletMainLoop()) {
