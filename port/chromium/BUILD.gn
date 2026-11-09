@@ -123,6 +123,19 @@ executable("nx_hello") {
   configs += [ ":nx_link" ]
 }
 
+# M2 bisect step 0: //base linked but unused (tests constructors + relocations).
+executable("nx_base_link") {
+  sources = [
+    "//port/chromium/base_link_main.cc",
+    "//port/chromium/shims/mmap_shim.cc",
+    "//port/chromium/shims/posix_shim.cc",
+    "//port/chromium/shims/nx_extra_shim.cc",
+    "//port/chromium/pa_stubs.cc",
+  ]
+  deps = [ "//base" ]
+  configs += [ ":nx_link" ]
+}
+
 # M2: //base linked into a real binary.
 executable("nx_base_smoke") {
   sources = [
