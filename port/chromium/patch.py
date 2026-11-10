@@ -400,4 +400,21 @@ patch("build/rust/crubit/BUILD.gn",
       "  # Chromium-NX: we intentionally build against devkitA64's libstdc++.\n",
       "we intentionally build against devkitA64's libstdc++")
 
+# 19) partition_alloc's RandBytes() falls back to /dev/urandom, which does not
+#     exist on Horizon -> PA_BASE_CHECK(fd_ >= 0) aborts during PA init (that was
+#     the long-sought "Check failed: fd_ >= 0. Cannot open /dev/urandom").
+#     libnx provides randomGet() backed by the CSRNG service; use it directly.
+patch("base/allocator/partition_allocator/src/partition_alloc/"
+      "partition_alloc_base/rand_util_posix.cc",
+      'PA_UNSAFE_BUFFER_USAGE void RandBytes(void* output, size_t output_length) {\n',
+      '// Chromium-NX: no /dev/urandom on Horizon; use libnx CSRNG.\n'
+      'extern "C" void randomGet(void* buf, unsigned long len);\n'
+      '\n'
+      'PA_UNSAFE_BUFFER_USAGE void RandBytes(void* output, size_t output_length) {\n'
+      '#if defined(__SWITCH__)\n'
+      '  randomGet(output, output_length);\n'
+      '  return;\n'
+      '#endif\n',
+      "no /dev/urandom on Horizon")
+
 print("all chromium patches applied")
