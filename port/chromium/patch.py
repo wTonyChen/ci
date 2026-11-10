@@ -350,15 +350,23 @@ patch("base/allocator/partition_allocator/src/partition_alloc/"
 
 patch("base/allocator/partition_allocator/src/partition_alloc/"
       "partition_alloc_base/log_message.cc",
+      'LogMessage::~LogMessage() {\n',
+      'extern "C" void svcBreak(unsigned, unsigned long long,\n'
+      '                         unsigned long long);\n'
+      '\n'
+      'LogMessage::~LogMessage() {\n',
+      "svcBreak declaration")
+
+patch("base/allocator/partition_allocator/src/partition_alloc/"
+      "partition_alloc_base/log_message.cc",
       '  if (severity_ == LOGGING_FATAL) {\n'
       '    PA_IMMEDIATE_CRASH();\n'
       '  }\n',
       '  if (severity_ == LOGGING_FATAL) {\n'
-      '    // Chromium-NX: the failing PA CHECK happens before the allocator (and\n'
-      '    // therefore the console) is usable, so the message cannot be printed.\n'
-      '    // Encode it into the registers of a user break instead: X1 = line,\n'
-      '    // X2 = first 8 bytes of the file base name. The AMS fatal screen shows\n'
-      '    // the registers, which is our only readable channel that early.\n'
+      '    // Chromium-NX: this fires before the allocator/console is usable, so the\n'
+      '    // message cannot be printed. Encode it into the registers of a user\n'
+      '    // break instead: info0 = line, info1 = first 8 bytes of the base name.\n'
+      '    // The AMS fatal screen shows X0..X2, which is our only readable channel.\n'
       '    const char* nx_name = file_;\n'
       '    if (nx_name) {\n'
       '      for (const char* p = nx_name; *p; ++p) {\n'
@@ -369,14 +377,11 @@ patch("base/allocator/partition_allocator/src/partition_alloc/"
       '    for (int i = 0; i < 8 && nx_name && nx_name[i]; ++i) {\n'
       '      nx_tag |= (unsigned long long)(unsigned char)nx_name[i] << (8 * i);\n'
       '    }\n'
-      '    register unsigned long long r0 __asm__("x0") = 0;\n'
-      '    register unsigned long long r1 __asm__("x1") =\n'
-      '        (unsigned long long)line_;\n'
-      '    register unsigned long long r2 __asm__("x2") = nx_tag;\n'
-      '    __asm__ __volatile__("mov x16, #0x26\\n\\tsvc #0"\n'
-      '                         : : "r"(r0), "r"(r1), "r"(r2)\n'
-      '                         : "x0", "x1", "x2", "x16", "memory");\n'
+      '    svcBreak(2u /* BreakReason_User */, (unsigned long long)line_, nx_tag);\n'
+      '    for (;;) {\n'
+      '      __asm__ __volatile__("nop");\n'
+      '    }\n'
       '  }\n',
-      "keep the message on screen instead of")
+      "info0 = line, info1 = first 8 bytes of the base name")
 
 print("all chromium patches applied")
