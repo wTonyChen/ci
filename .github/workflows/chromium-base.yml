@@ -83,8 +83,18 @@ jobs:
         run: |
           mkdir -p "$WORK" && cd "$WORK"
           gclient config --name=src "https://chromium.googlesource.com/chromium/src.git" --unmanaged
-          timeout 2700 gclient sync --no-history -j4 > /tmp/sync.log 2>&1
+          # PINNED: upstream Chromium breaks this port regularly (e.g. the Crubit
+          # libc++ assert). Sync to a known-good revision so a working tree stays
+          # reproducible; bump this when we deliberately want to move forward.
+          PINNED_REV="31dc1987cc4e2086c17e4031d6c700a30fe5af14"
+          timeout 2700 gclient sync --no-history -j4 \
+            --revision "src@${PINNED_REV}" > /tmp/sync.log 2>&1
           rc=$?
+          if [ "$rc" -ne 0 ]; then
+            echo "=== pinned sync failed (rc=$rc); retrying with HEAD ==="
+            timeout 2700 gclient sync --no-history -j4 > /tmp/sync.log 2>&1
+            rc=$?
+          fi
           echo "=== sync rc=$rc ==="
           tail -5 /tmp/sync.log
           df -h / | tail -1
