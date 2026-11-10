@@ -384,4 +384,15 @@ patch("base/allocator/partition_allocator/src/partition_alloc/"
       '  }\n',
       "info0 = line, info1 = first 8 bytes of the base name")
 
+# 18) Crubit: build/rust/crubit/BUILD.gn asserts use_custom_libcxx (Crubit
+#     hard-codes libc++ layouts), but we build against devkitA64's libstdc++.
+#     Newer Chromium revisions turn `enable_rust_api_from_cpp` on while the
+#     variable is (re)computed in an imported .gni, so overriding it from
+#     args.gn had no effect. Relax the assert; base does not use Crubit APIs.
+patch("build/rust/crubit/BUILD.gn",
+      "  assert(use_custom_libcxx,\n"
+      '         "`rust_api_from_cpp` requires `use_custom_libcxx = true`")\n',
+      "  # Chromium-NX: we intentionally build against devkitA64's libstdc++.\n",
+      "we intentionally build against devkitA64's libstdc++")
+
 print("all chromium patches applied")
