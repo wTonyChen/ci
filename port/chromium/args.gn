@@ -78,6 +78,11 @@ use_thin_archive = false
 # Horizon loader does not patch. It is a sanitizer feature we do not need.
 use_alloc_token = false
 
+# Crubit's Rust<->C++ bindings assume the in-tree libc++ (they hard-code libc++
+# layout), and build/rust/crubit/BUILD.gn asserts use_custom_libcxx when this is
+# on. We build against devkitA64's libstdc++, so keep Crubit off.
+enable_rust_api_from_cpp = false
+
 # NOTE: Rust stays ENABLED (build/rust/rust_target.gni asserts on it), but M3's
 # smoke target deliberately depends on a pure-C library instead of //base so the
 # link does not drag in Rust std (which needs libunwind). Revisit in M4.
