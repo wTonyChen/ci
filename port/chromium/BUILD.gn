@@ -131,6 +131,7 @@ executable("nx_base_link") {
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
     "//port/chromium/pa_stubs.cc",
+    "//port/chromium/nxlog.cc",
   ]
   deps = [ "//base" ]
   configs += [ ":nx_link" ]
@@ -148,6 +149,7 @@ executable("nx_base_smoke") {
     # partition_alloc emits MTE helper calls on this target but not their
     # definitions; they are identity functions without MTE hardware.
     "//port/chromium/pa_stubs.cc",
+    "//port/chromium/nxlog.cc",
   ]
   deps = [ "//base" ]
   configs += [ ":nx_link" ]
