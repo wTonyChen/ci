@@ -8,12 +8,10 @@
 extern "C" int nx_console_is_ready;
 
 __attribute__((constructor(0))) static void early_breadcrumb() {
-  consoleInit(NULL);
-  nx_console_is_ready = 1;
-  printf("nx_base_link: pre-main init reached\n");
-  printf("(sleeping 3s so this is readable)\n");
-  consoleUpdate(NULL);
-  svcSleepThread(3000000000ULL);
+  // NOTE: consoleInit() allocates through PA here, and PA may still be in its
+  // own initialisation -> calling it this early hangs the process. Keep the
+  // constructor allocation-free; the console comes up in main() instead.
+  nx_console_is_ready = 0;
 }
 
 int main(int argc, char** argv) {
@@ -21,6 +19,7 @@ int main(int argc, char** argv) {
   (void)argv;
 
   consoleInit(NULL);
+  nx_console_is_ready = 1;
   printf("nx_base_link -- //base linked, no base:: calls\n");
   printf("if you can read this, constructors + relocations are fine\n");
   printf("press + / - / A to exit\n");
