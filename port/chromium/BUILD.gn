@@ -123,6 +123,20 @@ executable("nx_hello") {
   configs += [ ":nx_link" ]
 }
 
+# Diagnostic: does the first constructor run when //base is linked?
+executable("nx_base_probe") {
+  sources = [
+    "//port/chromium/base_probe_main.cc",
+    "//port/chromium/shims/mmap_shim.cc",
+    "//port/chromium/shims/posix_shim.cc",
+    "//port/chromium/shims/nx_extra_shim.cc",
+    "//port/chromium/pa_stubs.cc",
+    "//port/chromium/nxlog.cc",
+  ]
+  deps = [ "//base" ]
+  configs += [ ":nx_link" ]
+}
+
 # M2 bisect step 0: //base linked but unused (tests constructors + relocations).
 executable("nx_base_link") {
   sources = [
