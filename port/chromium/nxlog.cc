@@ -54,6 +54,10 @@ void nx_log_str(const char* text) {
 
 int nx_log_flush(void) {
   if (!g_fs_ready) {
+    // Explicit init: fsdevMountSdmc() in libnx's crt0 normally does this, but in
+    // Application mode the mount path can differ; a failed init must not lose
+    // the buffered messages, so keep them for the next attempt.
+    fsInitialize();
     if (R_FAILED(fsOpenSdCardFileSystem(&g_fs))) {
       return -1;
     }
