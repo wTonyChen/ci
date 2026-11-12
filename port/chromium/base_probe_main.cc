@@ -8,6 +8,16 @@
 extern "C" void nx_log_str(const char*);
 extern "C" int nx_log_flush(void);
 
+// Runs even before the init_array constructors: .preinit_array is executed by
+// __libc_init_array() before any constructor. If this does not run either, the
+// hang is earlier still (crt0 / libnx init / dynamic relocations).
+static void probe_preinit() __attribute__((section(".preinit_array"), used));
+static void probe_preinit() {
+  nx_log_str("probe preinit reached\n");
+  nx_log_flush();
+  svcBreak(2u, 0xAAAABBBBCCCCDDDDULL, 0x5A5A0002ULL);
+}
+
 __attribute__((constructor(0))) static void probe_ctor() {
   nx_log_str("probe ctor(0) reached\n");
   nx_log_flush();
