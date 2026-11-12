@@ -417,4 +417,21 @@ patch("base/allocator/partition_allocator/src/partition_alloc/"
       '#endif\n',
       "no /dev/urandom on Horizon")
 
+# 20) Diagnostic: report through a user break the moment chromium's allocator
+#     shim is asked for the first allocation. If the marker shows up on the AMS
+#     fatal screen, the early hang happens inside PA's allocation path (which is
+#     reached during libnx init, i.e. before any constructor). If it never shows
+#     up, the hang is even earlier and unrelated to malloc.
+patch("base/allocator/partition_allocator/src/partition_alloc/shim/"
+      "allocator_shim_default_dispatch_to_partition_alloc.cc",
+      'void* DelegatedAllocFn(size_t size, AllocToken alloc_token, void* context) {\n'
+      '  const AllocatorDispatch* delegate = GetDelegate();\n',
+      'extern "C" void svcBreak(unsigned, unsigned long long,\n'
+      '                         unsigned long long);\n'
+      '\n'
+      'void* DelegatedAllocFn(size_t size, AllocToken alloc_token, void* context) {\n'
+      '  svcBreak(2u, 0x0BADF00D00000001ULL, (unsigned long long)size);\n'
+      '  const AllocatorDispatch* delegate = GetDelegate();\n',
+      "the moment chromium's allocator shim is asked")
+
 print("all chromium patches applied")
