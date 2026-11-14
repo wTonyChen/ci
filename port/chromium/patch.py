@@ -502,3 +502,32 @@ patch("v8/src/base/debug/stack_trace_posix.cc",
       '  action.sa_sigaction = &StackDumpSignalHandler;\n'
       '#endif\n',
       "newlib has no sa_sigaction (v8)")
+
+# 35) V8's libsampler installs a SIGPROF handler through sigaction.sa_sigaction,
+#     which newlib does not have (Horizon has no POSIX signals at all). Leave the
+#     sampler uninstalled: IsActive()/sampling then simply never fires.
+patch("v8/src/libsampler/sampler.cc",
+      '  static void Install() {\n'
+      '    struct sigaction sa;\n'
+      '    sa.sa_sigaction = &HandleProfilerSignal;\n',
+      '  static void Install() {\n'
+      '#if defined(__SWITCH__)\n'
+      '    // Chromium-NX: newlib\'s struct sigaction has no sa_sigaction, and\n'
+      '    // Horizon has no POSIX signals; the sampler stays uninstalled.\n'
+      '    (void)old_signal_handler_;\n'
+      '    signal_handler_installed_ = false;\n'
+      '    return;\n'
+      '#else\n'
+      '    struct sigaction sa;\n'
+      '    sa.sa_sigaction = &HandleProfilerSignal;\n',
+      "newlib has no sa_sigaction (v8 sampler)")
+
+patch("v8/src/libsampler/sampler.cc",
+      '    signal_handler_installed_ =\n'
+      '        (sigaction(SIGPROF, &sa, &old_signal_handler_) == 0);\n'
+      '  }\n',
+      '    signal_handler_installed_ =\n'
+      '        (sigaction(SIGPROF, &sa, &old_signal_handler_) == 0);\n'
+      '#endif\n'
+      '  }\n',
+      "close the __SWITCH__ guard around the sampler sigaction install")
