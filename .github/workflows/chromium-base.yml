@@ -143,7 +143,7 @@ jobs:
           GN=buildtools/linux64/gn
           [ -x "$GN" ] || GN=gn
           echo "gn: $($GN --version 2>&1)"
-          ARGS="$(grep -v '^#' port/chromium/args.gn | tr '\n' ' ')"
+          ARGS="$(grep -v '^#' port/chromium/args.gn | tr '\n' ' ') nx_build_v8=false"
           echo "args: $ARGS"
           set +e
           timeout 900 "$GN" gen out/switch --args="$ARGS" > /tmp/gn.log 2>&1
@@ -285,7 +285,7 @@ jobs:
           ARGS="$(grep -v '^#' port/chromium/args.gn | tr '\n' ' ')"
           # V8 自己的开关：不用指针压缩/沙箱/WASM/i18n；monolithic 静态库 + 内嵌快照，
           # 这样能直接和 libnx 一起静态链接，不需要外部 snapshot 文件。
-          ARGS="$ARGS v8_enable_pointer_compression=false v8_enable_sandbox=false v8_enable_i18n_support=false v8_enable_webassembly=false v8_monolithic=true v8_use_external_startup_data=false"
+          ARGS="$ARGS nx_build_v8=true v8_enable_pointer_compression=false v8_enable_sandbox=false v8_enable_i18n_support=false v8_enable_webassembly=false v8_monolithic=true v8_use_external_startup_data=false"
           set +e
           timeout 900 "$GN" gen out/switch-v8 --args="$ARGS" > /tmp/v8.log 2>&1
           echo "=== v8 gn gen rc=$? ==="
