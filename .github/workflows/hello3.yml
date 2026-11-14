@@ -1,0 +1,10 @@
+name: hello3
+on:
+  workflow_dispatch:
+jobs:
+  hi:
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkita64:latest
+    steps:
+      - run: echo hi
