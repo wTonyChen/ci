@@ -17,6 +17,9 @@
 
 #include <switch.h>
 
+// Horizon 上 TPIDR_EL0 是 0；clang 的 thread_local 依赖它。见 shims/nx_tls.cc。
+extern "C" void nx_tls_setup_current_thread(void);
+
 #include "base/containers/span.h"
 #include "base/files/file.h"
 #include "base/files/file_path.h"
@@ -166,6 +169,7 @@ int main(int argc, char** argv) {
   (void)argv;
 
   nx_log_str("rt: main reached\n");
+  nx_tls_setup_current_thread();
   nx_log_flush();
   consoleInit(NULL);
   nx_console_is_ready = 1;
