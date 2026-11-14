@@ -15,7 +15,9 @@
 #include <switch.h>
 
 // .data 段、文件里实打实占 912288 字节（只有第一个字节非零，避免被折进 .bss）
-#define PAD_BYTES 912288
+#ifndef PAD_BYTES
+#define PAD_BYTES 912288  // 默认：把 codebin 顶到 0x10c000，与失败包同尺寸
+#endif
 static volatile unsigned char g_pad[PAD_BYTES] = {0x5A};
 
 static FsFileSystem g_sdfs;
