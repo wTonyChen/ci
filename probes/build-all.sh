@@ -13,7 +13,7 @@ fi
 cd "$(dirname "$0")"
 
 PASS=0; FAIL=0; FAILED=""
-for p in ipv6 posix gl mmap; do
+for p in ipv6 posix gl mmap big; do
   echo
   echo "==================== probe: $p ===================="
   if make -s PROBE="$p" 2>&1; then
