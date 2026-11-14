@@ -30,6 +30,7 @@
 // 必须在任何 thread_local 之前：Horizon 的 TPIDR_EL0 是 0，clang 的 TLS 访问
 // 会直接踩空。见 port/chromium/shims/nx_tls.cc。
 extern "C" void nx_tls_setup_current_thread(void);
+extern "C" unsigned long nx_tls_read_word(unsigned long off);
 
 extern "C" int nx_console_is_ready;
 extern "C" void nx_log_str(const char*);
@@ -168,6 +169,14 @@ int main(int argc, char** argv) {
   nx_log_str("loop: main reached\n");
   nx_tls_setup_current_thread();
   nx_log_str("loop: tls ready\n");
+  {
+    // 自检：TLS 块里 thread_type_manager 的 vptr 必须非 0（.tdata 影像没映进来时是 0）。
+    char tls_line[96];
+    snprintf(tls_line, sizeof(tls_line),
+             "loop: tls word@0x10=0x%lx word@0x58=0x%lx\n",
+             nx_tls_read_word(0x10), nx_tls_read_word(0x58));
+    nx_log_str(tls_line);
+  }
   nx_log_flush();
   consoleInit(NULL);
   nx_console_is_ready = 1;
