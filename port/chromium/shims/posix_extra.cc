@@ -29,19 +29,6 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
   return r;
 }
 
-ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
-  const off_t saved = lseek(fd, 0, SEEK_CUR);
-  if (saved < 0)
-    return -1;
-  if (lseek(fd, offset, SEEK_SET) < 0)
-    return -1;
-  const ssize_t r = read(fd, buf, count);
-  const int e = errno;
-  lseek(fd, saved, SEEK_SET);
-  errno = e;
-  return r;
-}
-
 int fdatasync(int /*fd*/) {
   return 0;
 }
@@ -105,15 +92,4 @@ int futimes(int /*fd*/, const struct timeval /*tv*/[2]) {
 
 int futimens(int /*fd*/, const struct timespec /*ts*/[2]) {
   return 0;
-}
-
-int prctl(int /*option*/, ...) {
-  return 0;
-}
-
-int sched_setscheduler(pid_t /*pid*/, int /*policy*/,
-                       const struct sched_param* /*param*/) {
-  return 0;
-}
-
-}  // extern "C"
+}}  // extern "C"
