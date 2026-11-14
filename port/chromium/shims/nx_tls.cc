@@ -131,6 +131,34 @@ void* Trampoline(void* p) {
 extern "C" int __real_pthread_create(pthread_t*, const pthread_attr_t*,
                                      void* (*)(void*), void*);
 
+// Debug aid for the L5 investigation: when a probe sets nx_thread_trace = 1 we
+// log every pthread_create() attempt (and its result) to sdmc:/nxlog.txt, so a
+// crash inside base::ThreadPool still tells us how many threads it got to.
+extern "C" int nx_thread_trace;
+extern "C" void nx_log_str(const char*);
+extern "C" int nx_log_flush(void);
+
+static int g_threads_created;
+
+static int AppendUint(char* out, unsigned value) {
+  char tmp[10];
+  int n = 0;
+  do {
+    tmp[n++] = static_cast<char>('0' + value % 10);
+    value /= 10;
+  } while (value != 0);
+  for (int i = 0; i < n; ++i) {
+    out[i] = tmp[n - 1 - i];
+  }
+  return n;
+}
+
+
+
+extern "C" int nx_threads_created(void) {
+  return g_threads_created;
+}
+
 extern "C" int __wrap_pthread_create(pthread_t* t, const pthread_attr_t* attr,
                                      void* (*fn)(void*), void* arg) {
   StartArgs* a = static_cast<StartArgs*>(malloc(sizeof(StartArgs)));
@@ -138,5 +166,25 @@ extern "C" int __wrap_pthread_create(pthread_t* t, const pthread_attr_t* attr,
     return -1;  // ENOMEM 的量级，调用方会当失败处理
   a->fn = fn;
   a->arg = arg;
-  return __real_pthread_create(t, attr, Trampoline, a);
+  const int rc = __real_pthread_create(t, attr, Trampoline, a);
+  if (rc == 0) {
+    ++g_threads_created;
+  }
+  if (nx_thread_trace) {
+    // Hand-rolled formatting: this runs before/around allocator setup and must
+    // not depend on printf.
+    char line[80];
+    int n = 0;
+    const char* pre = "thread create #";
+    while (*pre) line[n++] = *pre++;
+    n += AppendUint(line + n, static_cast<unsigned>(g_threads_created));
+    const char* mid = " rc=";
+    while (*mid) line[n++] = *mid++;
+    n += AppendUint(line + n, static_cast<unsigned>(rc < 0 ? 0 : rc));
+    line[n++] = '\n';
+    line[n] = 0;
+    nx_log_str(line);
+    nx_log_flush();
+  }
+  return rc;
 }
