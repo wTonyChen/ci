@@ -1,0 +1,45 @@
+name: probes-build
+
+# Lives on the default branch (main); the payload is on master.
+# (re-created as probes2.yml: the old probes.yml stopped accepting
+#  workflow_dispatch events -- GitHub kept answering 422 -- while runs from push
+#  still worked. Same content otherwise.)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/probes2.yml']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkita64:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Install extra portlibs (mesa, needed by the GL probe)
+        run: dkp-pacman -S --noconfirm --needed switch-mesa
+
+      - name: Build all probes
+        run: |
+          export DEVKITPRO=/opt/devkitpro
+          cd probes
+          bash build-all.sh
+
+      - name: Collect .nro (flat: artifact zip must not nest one dir per probe)
+        if: always()
+        run: |
+          mkdir -p probes/dist
+          find probes/build -name '*.nro' -exec cp -f {} probes/dist/ \;
+          ls -l probes/dist || echo "(no .nro produced)"
+
+      - name: Upload .nro artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probes-nro
+          path: probes/dist/*.nro
+          if-no-files-found: warn
