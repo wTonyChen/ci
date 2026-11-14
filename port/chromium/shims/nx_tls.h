@@ -6,6 +6,12 @@
 // 于是第一次访问 TLS 变量就是「读 0x58」→ 0x0 附近取指 → Data Abort。
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+
 // 给当前线程准备一块零初始化的 TLS 区并把 TPIDR_EL0 指过去。
 // 幂等：已经指到我们的块上就立刻返回。失败时保持原样（不制造更糟的状态）。
 extern "C" void nx_tls_setup_current_thread(void);
+
+// 调试用：读当前线程 TLS 块里偏移 off 的那个机器字（没设 TP 时返回 0）。
+extern "C" uintptr_t nx_tls_read_word(size_t off);
