@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <vector>
 
 #include <switch.h>
 
@@ -31,6 +32,7 @@
 // 会直接踩空。见 port/chromium/shims/nx_tls.cc。
 extern "C" void nx_tls_setup_current_thread(void);
 extern "C" unsigned long nx_tls_read_word(unsigned long off);
+extern "C" int nx_thread_trace;
 
 extern "C" int nx_console_is_ready;
 extern "C" void nx_log_str(const char*);
@@ -137,6 +139,38 @@ void StepThread() {
   }
 }
 
+// ---- L4b: three concurrent base::Threads ---------------------------------
+// L4 proved one extra thread works. The ThreadPool crash may simply be "more
+// than one worker at a time", so pin that down before touching the pool again.
+void StepThreads3() {
+  Report("L4b 3 threads: start");
+  std::vector<std::unique_ptr<base::Thread>> threads;
+  std::atomic<int> done{0};
+  for (int i = 0; i < 3; ++i) {
+    auto thread = std::make_unique<base::Thread>("nx_worker");
+    if (!thread->Start()) {
+      Report("L4b thread %d: Start failed", i);
+      g_all_ok = false;
+      return;
+    }
+    threads.push_back(std::move(thread));
+  }
+  for (auto& thread : threads) {
+    thread->task_runner()->PostTask(
+        FROM_HERE, base::BindOnce([](std::atomic<int>* d) {
+          base::PlatformThread::Sleep(base::Milliseconds(20));
+          ++(*d);
+        }, &done));
+  }
+  for (auto& thread : threads) {
+    thread->Stop();
+  }
+  Report("L4b 3 threads: ok (%d/3 tasks done)", done.load());
+  if (done.load() != 3) {
+    g_all_ok = false;
+  }
+}
+
 // ---- L5: thread pool ------------------------------------------------------
 void StepPool() {
   Report("L5 thread pool: start");
@@ -174,6 +208,7 @@ int main(int argc, char** argv) {
   nx_log_str("loop: main reached\n");
   nx_tls_setup_current_thread();
   nx_log_str("loop: tls ready\n");
+  nx_thread_trace = 1;
   {
     // 自检：TLS 块里 thread_type_manager 的 vptr 必须非 0（.tdata 影像没映进来时是 0）。
     char tls_line[96];
@@ -191,6 +226,7 @@ int main(int argc, char** argv) {
   StepImmediate();
   StepDelayed();
   StepThread();
+  StepThreads3();
   StepPool();
 
   Report("loop: all steps done, result = %s", g_all_ok ? "PASS" : "FAIL");
