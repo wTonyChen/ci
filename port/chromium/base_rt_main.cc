@@ -87,18 +87,18 @@ void StepFile() {
                       base::File::FLAG_WRITE);
   if (!file.IsValid()) {
     Report("S3 file: FAILED to open sdmc:/nxrt.txt: %s",
-           base::File::ErrorToString(file.error_details()));
+           base::File::ErrorToString(file.error_details()).c_str());
     g_all_ok = false;
     return;
   }
   const std::string payload =
       base::StringPrintf("base::File works, %d\n", 42);
-  const int written = file.WriteAtCurrentPos(payload.data(),
-                                             static_cast<int>(payload.size()));
+  // Offsets are explicit: WriteAtCurrentPos/ReadAtCurrentPos are private.
+  const int written = file.Write(0, payload.data(),
+                                 static_cast<int>(payload.size()));
   file.Flush();
-  file.Seek(base::File::FROM_BEGIN, 0);
   char buf[64] = {0};
-  const int got = file.ReadAtCurrentPos(buf, sizeof(buf) - 1);
+  const int got = file.Read(0, buf, sizeof(buf) - 1);
   Report("S3 file: ok, wrote %d bytes, read back %d bytes: \"%s\"", written, got,
          buf);
   if (written != static_cast<int>(payload.size()) || got != written) {
@@ -109,7 +109,8 @@ void StepFile() {
 // ---- S4: callbacks (no OS dependency, but every later layer uses them) ----
 void StepCallbacks() {
   Report("S4 callbacks: start");
-  base::OnceCallback<int(int)> once =
+  // Binding 21 leaves a nullary callback; the RunType must match exactly.
+  base::OnceCallback<int()> once =
       base::BindOnce([](int v) { return v * 2; }, 21);
   base::RepeatingCallback<std::string(const std::string&)> rep =
       base::BindRepeating([](const std::string& s) { return s + "!"; });
