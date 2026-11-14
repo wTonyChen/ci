@@ -269,6 +269,52 @@ jobs:
           fi
           exit 0
 
+      - name: V8 experimental build (non-blocking)
+        continue-on-error: true
+        timeout-minutes: 120
+        run: |
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitA64
+          export PATH=/opt/devkitpro/devkitA64/bin:$PATH
+          cd "$WORK/src"
+          mkdir -p out/switch-v8
+          echo "--- v8 tree present? ---"
+          ls -d v8 v8/include 2>/dev/null || echo "NO v8 DIR"
+          GN=buildtools/linux64/gn
+          [ -x "$GN" ] || GN=gn
+          ARGS="$(grep -v '^#' port/chromium/args.gn | tr '\n' ' ')"
+          # V8 自己的开关：不用指针压缩/沙箱/WASM/i18n；monolithic 静态库 + 内嵌快照，
+          # 这样能直接和 libnx 一起静态链接，不需要外部 snapshot 文件。
+          ARGS="$ARGS v8_enable_pointer_compression=false v8_enable_sandbox=false v8_enable_i18n_support=false v8_enable_webassembly=false v8_monolithic=true v8_use_external_startup_data=false"
+          set +e
+          timeout 900 "$GN" gen out/switch-v8 --args="$ARGS" > /tmp/v8.log 2>&1
+          echo "=== v8 gn gen rc=$? ==="
+          grep -aE 'ERROR|Unresolved|assert' /tmp/v8.log | head -20
+          timeout 5400 ninja -C out/switch-v8 -j4 nx_v8_hello >> /tmp/v8.log 2>&1
+          rc=$?
+          echo "=== v8 ninja rc=$rc ==="
+          grep -aE 'error:|undefined reference|FAILED' /tmp/v8.log | head -40
+          tail -20 /tmp/v8.log
+          if [ -f out/switch-v8/nx_v8_hello ]; then
+            /opt/devkitpro/tools/bin/nacptool --create "nx_v8_hello" "Chromium-NX" "0.1" /tmp/nx_v8_hello.nacp >/dev/null 2>&1
+            /opt/devkitpro/tools/bin/elf2nro out/switch-v8/nx_v8_hello out/switch-v8/nx_v8_hello.nro --icon=/opt/devkitpro/libnx/default_icon.jpg --nacp=/tmp/nx_v8_hello.nacp 2>&1 | tail -3
+            ls -l out/switch-v8/nx_v8_hello out/switch-v8/nx_v8_hello.nro || true
+          fi
+          tail -c 1500000 /tmp/v8.log > out/switch-v8/v8-build.log 2>/dev/null || true
+          exit 0
+
+      - name: upload V8 experiment (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v8-experiment
+          path: |
+            work/src/out/switch-v8/nx_v8_hello
+            work/src/out/switch-v8/nx_v8_hello.nro
+            work/src/out/switch-v8/v8-build.log
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: upload nx_smoke ELF (for offline analysis)
         if: always()
         uses: actions/upload-artifact@v4
