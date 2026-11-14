@@ -93,6 +93,13 @@ config("nx_link") {
     "-Wl,-z,notext",
     "-Wl,-z,nopack-relative-relocs",
     "-Wl,-Map=nx_smoke.map",
+    # The virtual-fd layer (shims/nxfd_shim.cc) must wrap these: libnx defines
+    # poll() itself, so a same-name definition would lose to libnx's.
+    "-Wl,--wrap=poll",
+    "-Wl,--wrap=read",
+    "-Wl,--wrap=write",
+    "-Wl,--wrap=close",
+    "-Wl,--wrap=fcntl",
   ]
   libs = [
     # //base is C++: it needs the devkitA64 C++ runtime before libnx.
@@ -110,6 +117,7 @@ executable("nx_smoke") {
     "//port/chromium/shims/mmap_shim.cc",
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
+    "//port/chromium/shims/nxfd_shim.cc",
   ]
   deps = [ "//third_party/zlib" ]
   # NOTE: `configs = [...]` is rejected ("Replacing nonempty list"); the default
@@ -130,6 +138,7 @@ executable("nx_base_probe") {
     "//port/chromium/shims/mmap_shim.cc",
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
+    "//port/chromium/shims/nxfd_shim.cc",
     "//port/chromium/pa_stubs.cc",
     "//port/chromium/nxlog.cc",
   ]
@@ -144,6 +153,7 @@ executable("nx_base_link") {
     "//port/chromium/shims/mmap_shim.cc",
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
+    "//port/chromium/shims/nxfd_shim.cc",
     "//port/chromium/pa_stubs.cc",
     "//port/chromium/nxlog.cc",
   ]
@@ -160,6 +170,7 @@ executable("nx_base_smoke") {
     "//port/chromium/shims/mmap_shim.cc",
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
+    "//port/chromium/shims/nxfd_shim.cc",
     # partition_alloc emits MTE helper calls on this target but not their
     # definitions; they are identity functions without MTE hardware.
     "//port/chromium/pa_stubs.cc",
@@ -170,12 +181,28 @@ executable("nx_base_smoke") {
 }
 
 # M2 step 2: clocks, sleeping, file IO through //base, callbacks, OS threads.
+# M2 step 3: MessageLoop/task runners on top of the virtual-fd layer (eventfd+poll).
+executable("nx_base_loop") {
+  sources = [
+    "//port/chromium/base_loop_main.cc",
+    "//port/chromium/shims/mmap_shim.cc",
+    "//port/chromium/shims/posix_shim.cc",
+    "//port/chromium/shims/nx_extra_shim.cc",
+    "//port/chromium/shims/nxfd_shim.cc",
+    "//port/chromium/pa_stubs.cc",
+    "//port/chromium/nxlog.cc",
+  ]
+  deps = [ "//base" ]
+  configs += [ ":nx_link" ]
+}
+
 executable("nx_base_rt") {
   sources = [
     "//port/chromium/base_rt_main.cc",
     "//port/chromium/shims/mmap_shim.cc",
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
+    "//port/chromium/shims/nxfd_shim.cc",
     "//port/chromium/pa_stubs.cc",
     "//port/chromium/nxlog.cc",
   ]
