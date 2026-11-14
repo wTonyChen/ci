@@ -117,16 +117,16 @@ void StepThread() {
       FROM_HERE,
       base::BindOnce(
           [](std::atomic<int>* v, base::RunLoop* l) {
-            *v = static_cast<int>(
-                base::PlatformThread::CurrentId() & 0xffff);
+            // 这棵树的 PlatformThreadId 是类，不能和 int 做位运算；
+            // 只要任务真在 worker 上跑到了，就足以证明 Thread 可用。
+            *v = 1;
             l->Quit();
           },
           &seen, &loop));
   loop.Run();
   worker.Stop();
   if (seen.load() != 0) {
-    Report("L4 base::Thread: ok (worker tid low bits 0x%x, stopped cleanly)",
-           seen.load());
+    Report("L4 base::Thread: ok (task ran on worker, stopped cleanly)");
   } else {
     Fail("L4 base::Thread", "task on worker never ran");
   }
