@@ -435,3 +435,70 @@ patch("base/allocator/partition_allocator/src/partition_alloc/shim/"
       "the moment chromium's allocator shim is asked")
 
 print("all chromium patches applied")
+
+# ---------------------------------------------------------------------------
+# V8 (M3): v8/src/base carries its own copy of platform/stack_trace code, so
+# the newlib-vs-glibc gaps that patch.py already handles for Chromium's //base
+# have to be re-applied here with V8's anchors.
+# ---------------------------------------------------------------------------
+
+# 32) newlib's struct tm has neither tm_zone nor tm_gmtoff.
+patch("v8/src/base/platform/platform-posix-time.cc",
+      '  if (!t || !t->tm_zone) return "";\n'
+      '  return t->tm_zone;\n',
+      '#if defined(__SWITCH__)\n'
+      '  // Chromium-NX: newlib\'s struct tm has no tm_zone; Horizon is UTC-only.\n'
+      '  if (!t) return "";\n'
+      '  return "";\n'
+      '#else\n'
+      '  if (!t || !t->tm_zone) return "";\n'
+      '  return t->tm_zone;\n'
+      '#endif\n',
+      "newlib's struct tm has no tm_zone")
+
+patch("v8/src/base/platform/platform-posix-time.cc",
+      '  return static_cast<double>(t->tm_gmtoff * msPerSecond -\n'
+      '                             (t->tm_isdst > 0 ? 3600 * msPerSecond : 0));\n',
+      '#if defined(__SWITCH__)\n'
+      '  // Chromium-NX: newlib has no tm_gmtoff. Horizon runs in UTC; keep the\n'
+      '  // daylight-saving correction so Date still reports a sane offset.\n'
+      '  return static_cast<double>(t->tm_isdst > 0 ? -3600 * msPerSecond : 0);\n'
+      '#else\n'
+      '  return static_cast<double>(t->tm_gmtoff * msPerSecond -\n'
+      '                             (t->tm_isdst > 0 ? 3600 * msPerSecond : 0));\n'
+      '#endif\n',
+      "newlib has no tm_gmtoff")
+
+# 33) newlib's struct rusage is empty (no ru_maxrss).
+patch("v8/src/base/platform/platform-posix.cc",
+      '  return static_cast<int>(usage.ru_maxrss);\n',
+      '#if defined(__SWITCH__)\n'
+      '  // Chromium-NX: newlib\'s struct rusage has no ru_maxrss.\n'
+      '  (void)usage;\n'
+      '  return 0;\n'
+      '#else\n'
+      '  return static_cast<int>(usage.ru_maxrss);\n'
+      '#endif\n',
+      "newlib's struct rusage has no ru_maxrss")
+
+# 34) V8's stack_trace_posix.cc has the same newlib gaps as Chromium's copy
+# (no siginfo_t::si_addr, no sa_sigaction), and we never install the handler.
+patch("v8/src/base/debug/stack_trace_posix.cc",
+      '    internal::itoa_r(reinterpret_cast<intptr_t>(info->si_addr), buf,\n'
+      '                     sizeof(buf), 16, 12);\n',
+      '#if defined(__SWITCH__)\n'
+      '    // Chromium-NX: newlib\'s siginfo_t has no si_addr.\n'
+      '    internal::itoa_r(0, buf, sizeof(buf), 16, 12);\n'
+      '#else\n'
+      '    internal::itoa_r(reinterpret_cast<intptr_t>(info->si_addr), buf,\n'
+      '                     sizeof(buf), 16, 12);\n'
+      '#endif\n',
+      "newlib's siginfo_t has no si_addr (v8)")
+
+patch("v8/src/base/debug/stack_trace_posix.cc",
+      '  action.sa_sigaction = &StackDumpSignalHandler;\n',
+      '#if !defined(__SWITCH__)\n'
+      '  // Chromium-NX: newlib has no sa_sigaction (and we never install it).\n'
+      '  action.sa_sigaction = &StackDumpSignalHandler;\n'
+      '#endif\n',
+      "newlib has no sa_sigaction (v8)")
