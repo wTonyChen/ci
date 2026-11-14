@@ -266,6 +266,24 @@ executable("nx_base_rt") {
   configs += [ ":nx_link" ]
 }
 
+
+# M3 前哨: 最小的 V8 启动。不依赖 //base，只链 v8_monolithic + libplatform，
+# 这样失败点很干净（平台/Isolate/Context/编译/执行），不会和 base 的问题混在一起。
+executable("nx_v8_hello") {
+  sources = [
+    "//port/chromium/v8_hello_main.cc",
+    "//port/chromium/shims/mmap_shim.cc",
+    "//port/chromium/shims/posix_shim.cc",
+    "//port/chromium/shims/nx_extra_shim.cc",
+    "//port/chromium/shims/nxfd_shim.cc",
+    "//port/chromium/shims/posix_extra.cc",
+    "//port/chromium/nxlog.cc",
+  ]
+  include_dirs = [ "//v8/include" ]
+  deps = [ "//v8:v8_monolithic" ]
+  configs += [ ":nx_link" ]
+}
+
 group("gn_all") {
   deps = [ "//base:base" ]
 }
