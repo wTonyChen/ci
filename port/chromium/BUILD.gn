@@ -282,7 +282,7 @@ executable("nx_base_rt") {
 
 
 if (nx_build_v8) {
-  # M3 前哨: 最小的 V8 启动。不依赖 //base，只链 v8_monolithic + libplatform，
+  # M3 前哨: 最小的 V8 启动。不依赖 //base，只链 v8_monolith + libplatform，
   # 这样失败点很干净（平台/Isolate/Context/编译/执行），不会和 base 的问题混在一起。
   executable("nx_v8_hello") {
     sources = [
@@ -296,7 +296,11 @@ if (nx_build_v8) {
       "//port/chromium/shims/nx_tls.cc",
     ]
     include_dirs = [ "//v8/include" ]
-    deps = [ "//v8:v8_monolithic" ]
+    # v8 BUILD.gn 里 monolithic 静态库的目标名是 v8_monolith（在
+    # if (v8_monolithic) 里定义），不是 v8_monolithic；后者是 arg 名。
+    deps = [
+      "//v8:v8_monolith",
+    ]
     configs += [ ":nx_link" ]
   }
 }
