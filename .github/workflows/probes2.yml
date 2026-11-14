@@ -6,9 +6,6 @@ name: probes-build
 #  still worked. Same content otherwise.)
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/probes2.yml']
 
 jobs:
   build:
