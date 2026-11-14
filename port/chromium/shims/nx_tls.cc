@@ -2,10 +2,14 @@
 //
 // 思路：linker script（libnx switch.ld）已经把 .tdata/.tbss 的大小留在
 // __tls_start/__tls_end 之间，但没有任何东西把 TP 设过去。我们自己分配一块
-// 每线程的区（mmap + 清零），把 TPIDR_EL0 指到它，thread_local 就正常了。
+// 每线程的区，把 .tdata 的初值映进去、TPIDR_EL0 指过去，thread_local 就正常了。
 //
-// 注意：这里只做零初始化（.tdata 的初值在影像里、不在 .main.tls 区），
-// 对本项目目前用到的 TLS 变量（计数器、flag、缓存）足够。
+// 两个必须踩准的点（都是踩过的坑）：
+//   1) AArch64 静态 TLS 的 TP 比 .tdata 起点低 16 字节（TP_OFFSET），
+//      所以 .tdata 的影像要落在 TP + 16；clang 下发的固定偏移正好差的这 16。
+//   2) 光清零不够：`constinit thread_local` 对象的 vptr 存在 .tdata 影像里
+//      （靠 RELATIVE 重定位写成最终地址），不映影像的话每线程的 vptr 都是 0，
+//      第一次调用虚函数就崩在 0x10（L4 base::Thread 就是这么崩的）。
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -20,11 +24,16 @@
 extern "C" {
 extern const char __tls_start[];
 extern const char __tls_end[];
+// .tdata 的初值影像（linker script 给的）。缺了也不至于链接失败。
+extern const char __tdata_lma[] __attribute__((weak));
+extern const char __tdata_lma_end[] __attribute__((weak));
 }
 
 namespace {
 
 constexpr size_t kPage = 0x1000;
+// AArch64 静态 TLS：TP 指向块起点，第一个 TLS 变量在 TP + 0x10。
+constexpr size_t kTlsBias = 0x10;
 constexpr int kMaxBlocks = 128;
 
 void* g_blocks[kMaxBlocks];
@@ -58,15 +67,24 @@ extern "C" void nx_tls_setup_current_thread(void) {
     return;
 
   size_t tls_size = static_cast<size_t>(__tls_end - __tls_start);
-  if (tls_size == 0)
+  if (tls_size == 0 || tls_size > (1u << 20))
     tls_size = kPage;
-  const size_t size = ((tls_size + kPage - 1) / kPage) * kPage;
+  const size_t total = tls_size + kTlsBias;
+  const size_t size = ((total + kPage - 1) / kPage) * kPage;
 
   void* block = mmap(nullptr, size, PROT_READ | PROT_WRITE,
                      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (block == MAP_FAILED)
     return;
   memset(block, 0, size);
+
+  // .tdata 影像：constinit thread_local 的 vptr/初值都在这里。
+  if (__tdata_lma != nullptr && __tdata_lma_end != nullptr) {
+    size_t tdata_size = static_cast<size_t>(__tdata_lma_end - __tdata_lma);
+    if (tdata_size > tls_size)
+      tdata_size = tls_size;
+    memcpy(static_cast<char*>(block) + kTlsBias, __tdata_lma, tdata_size);
+  }
 
   WriteTp(reinterpret_cast<uintptr_t>(block));
   if (ReadTp() != reinterpret_cast<uintptr_t>(block)) {
@@ -83,6 +101,13 @@ extern "C" void nx_tls_setup_current_thread(void) {
       break;
     }
   }
+}
+
+extern "C" uintptr_t nx_tls_read_word(size_t off) {
+  const uintptr_t tp = ReadTp();
+  if (tp == 0)
+    return 0;
+  return *reinterpret_cast<const uintptr_t*>(tp + off);
 }
 
 // --- 线程：每个新线程也要有自己的 TLS 块 ---------------------------------
