@@ -27,6 +27,10 @@
 #include "base/threading/thread.h"
 #include "base/time/time.h"
 
+// 必须在任何 thread_local 之前：Horizon 的 TPIDR_EL0 是 0，clang 的 TLS 访问
+// 会直接踩空。见 port/chromium/shims/nx_tls.cc。
+extern "C" void nx_tls_setup_current_thread(void);
+
 extern "C" int nx_console_is_ready;
 extern "C" void nx_log_str(const char*);
 extern "C" int nx_log_flush(void);
@@ -162,6 +166,8 @@ int main(int argc, char** argv) {
   (void)argc;
   (void)argv;
   nx_log_str("loop: main reached\n");
+  nx_tls_setup_current_thread();
+  nx_log_str("loop: tls ready\n");
   nx_log_flush();
   consoleInit(NULL);
   nx_console_is_ready = 1;
