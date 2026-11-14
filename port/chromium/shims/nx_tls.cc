@@ -134,7 +134,7 @@ extern "C" int __real_pthread_create(pthread_t*, const pthread_attr_t*,
 // Debug aid for the L5 investigation: when a probe sets nx_thread_trace = 1 we
 // log every pthread_create() attempt (and its result) to sdmc:/nxlog.txt, so a
 // crash inside base::ThreadPool still tells us how many threads it got to.
-extern "C" int nx_thread_trace;
+extern "C" int nx_thread_trace = 0;  // definition: probes only declare it
 extern "C" void nx_log_str(const char*);
 extern "C" int nx_log_flush(void);
 
