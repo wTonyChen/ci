@@ -1,0 +1,17 @@
+name: probes5
+
+# Lives on the default branch (main); the payload is on master.
+# NOTE: workflow_dispatch on this file keeps answering 422 ("does not have
+# workflow_dispatch trigger") even though the trigger is present, so we kick it
+# with a push to this file instead.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/probes5.yml']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hi
