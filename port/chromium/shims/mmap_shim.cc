@@ -19,6 +19,8 @@
 //  * It is enough to get PartitionAlloc / V8 style allocators off the ground.
 //    It is NOT true virtual memory: no demand paging, no guard pages, no
 //    overcommit, and PROT_NONE is not enforced.
+#include <atomic>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,6 +50,20 @@ int g_nrec;
 char* g_bump;
 size_t g_left;
 bool g_inited;
+
+// The arena is process-wide, but Chromium's thread pool mmaps TLS blocks from
+// several threads at once. Everything below mutates g_bump/g_rec, so it needs a
+// lock; a spinlock is enough (critical sections are microseconds and Horizon has
+// three cores).
+std::atomic_flag g_lock = ATOMIC_FLAG_INIT;
+
+struct ArenaLock {
+  ArenaLock() {
+    while (g_lock.test_and_set(std::memory_order_acquire)) {
+    }
+  }
+  ~ArenaLock() { g_lock.clear(std::memory_order_release); }
+};
 
 bool EnsureInit() {
   if (g_inited) {
@@ -108,6 +124,7 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
     return MAP_FAILED;
   }
   const size_t size = AlignUp(length);
+  ArenaLock guard;
 
   // reserve-then-commit: MAP_FIXED onto something we already handed out
   if ((flags & MAP_FIXED) && addr) {
@@ -162,6 +179,7 @@ void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 }
 
 int munmap(void* addr, size_t length) {
+  ArenaLock guard;
   Rec* r = RecFind(addr, length ? length : 1);
   if (!r) {
     errno = EINVAL;
@@ -172,6 +190,7 @@ int munmap(void* addr, size_t length) {
 }
 
 int mprotect(void* addr, size_t length, int prot) {
+  ArenaLock guard;
   Rec* r = RecFind(addr, length ? length : 1);
   if (!r) {
     errno = EINVAL;
