@@ -1,9 +1,10 @@
 name: probes
 
 # Lives on the default branch (main); the payload is on master.
-# NOTE: workflow_dispatch on this file keeps answering 422 ("does not have
-# workflow_dispatch trigger") even though the trigger is present, so we kick it
-# with a push to this file instead.
+# NOTE: a step name once contained "flat: ..." -- an unquoted colon+space. That
+# made the whole file invalid YAML, which GitHub reports as "Workflow does not
+# have 'workflow_dispatch' trigger" (422) and runs as a startup failure with 0
+# jobs. Keep every unquoted scalar colon-free.
 on:
   workflow_dispatch:
   push:
@@ -29,7 +30,7 @@ jobs:
           cd probes
           bash build-all.sh
 
-      - name: Collect .nro (flat: artifact zip must not nest one dir per probe)
+      - name: Collect .nro (flat zip - no per-probe folder)
         if: always()
         run: |
           mkdir -p probes/dist
