@@ -196,6 +196,19 @@ executable("nx_base_loop") {
   configs += [ ":nx_link" ]
 }
 
+# M2 step 3b: raw address-space/exec-memory facts for the V8 decision (no //base).
+executable("nx_base_mem") {
+  sources = [
+    "//port/chromium/base_mem_main.cc",
+    "//port/chromium/shims/mmap_shim.cc",
+    "//port/chromium/shims/posix_shim.cc",
+    "//port/chromium/shims/nx_extra_shim.cc",
+    "//port/chromium/shims/nxfd_shim.cc",
+    "//port/chromium/nxlog.cc",
+  ]
+  configs += [ ":nx_link" ]
+}
+
 executable("nx_base_rt") {
   sources = [
     "//port/chromium/base_rt_main.cc",
