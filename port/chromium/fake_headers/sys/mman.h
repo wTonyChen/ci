@@ -133,6 +133,20 @@ static inline int msync(void* addr, size_t length, int flags) {
   return 0;
 }
 
+// V8's platform-linux.cc wants mremap()/MREMAP_*; Horizon has no such call.
+// KernelSupportsRemapDontUnmap() is false there, and RemapShared() maps
+// MAP_FAILED to nullptr and falls back to a plain mmap for shared memory.
+#ifndef MREMAP_MAYMOVE
+#define MREMAP_MAYMOVE 1
+#endif
+#ifndef MREMAP_FIXED
+#define MREMAP_FIXED 2
+#endif
+#ifndef MREMAP_DONTUNMAP
+#define MREMAP_DONTUNMAP 4
+#endif
+void* mremap(void* old_address, size_t old_size, size_t new_size, int flags, ...);
+
 #ifdef __cplusplus
 }
 #endif
