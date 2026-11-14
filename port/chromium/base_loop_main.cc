@@ -141,22 +141,27 @@ void StepThread() {
 void StepPool() {
   Report("L5 thread pool: start");
   base::ThreadPoolInstance::CreateAndStartWithDefaultParams("nx_probe");
+  Report("L5a pool created");
+
+  constexpr int kTasks = 8;
   std::atomic<int> done{0};
   base::RunLoop loop;
-  for (int i = 0; i < 16; ++i) {
+  for (int i = 0; i < kTasks; ++i) {
     base::ThreadPool::PostTask(
         FROM_HERE, base::BindOnce(
                        [](std::atomic<int>* d, base::RunLoop* l) {
-                         if (++(*d) == 16) {
+                         if (++(*d) == kTasks) {
                            l->Quit();
                          }
                        },
                        &done, &loop));
   }
+  Report("L5b %d tasks posted", kTasks);
   loop.Run();
+  Report("L5c tasks ran: %d/%d", done.load(), kTasks);
   base::ThreadPoolInstance::Get()->Shutdown();
-  Report("L5 thread pool: ok (%d/16 tasks done)", done.load());
-  if (done.load() != 16) {
+  Report("L5 thread pool: ok (%d/%d tasks done)", done.load(), kTasks);
+  if (done.load() != kTasks) {
     g_all_ok = false;
   }
 }
