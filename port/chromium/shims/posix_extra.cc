@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <switch.h>
 
 extern "C" {
 
@@ -54,6 +55,64 @@ uid_t geteuid(void) {
 }
 
 gid_t getegid(void) {
+  return 0;
+}
+
+}  // extern "C"
+
+// ---- 第二批：//base 的 POSIX 文件/线程路径会用到、但 newlib 里根本没有的调用 ----
+#include <sched.h>
+#include <string.h>
+#include <sys/time.h>
+
+namespace {
+FsFileSystem* SdFs() {
+  static FsFileSystem fs;
+  static int state = 0;  // 0=未初始化 1=好 -1=坏
+  if (state == 0)
+    state = R_SUCCEEDED(fsOpenSdCardFileSystem(&fs)) ? 1 : -1;
+  return state == 1 ? &fs : nullptr;
+}
+}  // namespace
+
+extern "C" {
+
+// newlib 没有 mkdir；Switch 上真正要建目录的地方都是 sdmc:。
+int mkdir(const char* path, mode_t /*mode*/) {
+  FsFileSystem* fs = SdFs();
+  if (!fs) {
+    errno = ENOSYS;
+    return -1;
+  }
+  const char* rel = path;
+  if (strncmp(rel, "sdmc:", 5) == 0)
+    rel = rel + 5;
+  if (R_FAILED(fsFsCreateDirectory(fs, rel))) {
+    errno = EIO;
+    return -1;
+  }
+  return 0;
+}
+
+int ftruncate(int /*fd*/, off_t /*length*/) {
+  // devoptab 没有 truncate 钩子；探针只追加写，不需要真的截断。
+  return 0;
+}
+
+int futimes(int /*fd*/, const struct timeval /*tv*/[2]) {
+  return 0;
+}
+
+int futimens(int /*fd*/, const struct timespec /*ts*/[2]) {
+  return 0;
+}
+
+int prctl(int /*option*/, ...) {
+  return 0;
+}
+
+int sched_setscheduler(pid_t /*pid*/, int /*policy*/,
+                       const struct sched_param* /*param*/) {
   return 0;
 }
 
