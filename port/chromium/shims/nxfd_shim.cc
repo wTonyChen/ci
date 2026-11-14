@@ -136,19 +136,25 @@ int Readiness(int i, short events) {
 
 short PollRevents(int i, short events) {
   const Obj& o = g_objs[i];
+  const short always = POLLERR | POLLHUP;
+  short r = 0;
   switch (o.kind) {
     case kEventFd:
-      return (o.counter ? POLLIN : 0) | POLLOUT;
+      r = (o.counter ? POLLIN : 0) | POLLOUT;
+      break;
     case kTimerFd:
-      return (o.armed && NowNs() >= o.next_ns) ? POLLIN : 0;
+      r = (o.armed && NowNs() >= o.next_ns) ? POLLIN : 0;
+      break;
     case kPipeRead:
-      return (o.len > 0 || o.peer == -1) ? POLLIN : 0;
+      r = (o.len > 0 || o.peer == -1) ? POLLIN : 0;
+      break;
     case kPipeWrite:
-      return (o.peer == -1) ? POLLOUT : 0;
+      r = (o.peer == -1) ? POLLOUT : 0;
+      break;
     default:
-      (void)events;
-      return 0;
+      break;
   }
+  return r & (events | always);
 }
 
 }  // namespace
@@ -422,13 +428,13 @@ int __wrap_fcntl(int fd, int cmd, ...) {
 // Merges real fds (straight to libnx) with virtual fds (Readiness above).
 // Level-triggered, like POSIX: callers re-poll after handling.
 int __wrap_poll(struct pollfd* fds, nfds_t nfds, int timeout) {
-  struct pollfd real[32];
-  int real_idx[32];
+  struct pollfd real[64];
+  int real_idx[64];
   int nreal = 0;
   for (nfds_t k = 0; k < nfds; ++k) {
     fds[k].revents = 0;
     if (IndexOf(fds[k].fd) < 0) {
-      if (nreal < 32) {
+      if (nreal < 64) {
         real[nreal] = fds[k];
         real_idx[nreal] = static_cast<int>(k);
         ++nreal;
