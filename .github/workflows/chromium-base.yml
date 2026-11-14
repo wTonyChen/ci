@@ -340,8 +340,7 @@ jobs:
           exit 0
 
       - name: upload V8 experiment (if any)
-        if: github.event.inputs.v8 == 'true' 
-        if: always()
+        if: always() && github.event.inputs.v8 == 'true' 
         uses: actions/upload-artifact@v4
         with:
           name: v8-experiment
