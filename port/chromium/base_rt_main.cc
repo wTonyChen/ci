@@ -17,6 +17,7 @@
 
 #include <switch.h>
 
+#include "base/containers/span.h"
 #include "base/files/file.h"
 #include "base/files/file_path.h"
 #include "base/functional/bind.h"
@@ -93,15 +94,21 @@ void StepFile() {
   }
   const std::string payload =
       base::StringPrintf("base::File works, %d\n", 42);
-  // Offsets are explicit: WriteAtCurrentPos/ReadAtCurrentPos are private.
-  const int written = file.Write(0, payload.data(),
-                                 static_cast<int>(payload.size()));
+  // This tree's unchecked File::Read/Write are private; the public entry points
+  // are the span-based *AndCheck variants.
+  const base::span<const uint8_t> src(
+      reinterpret_cast<const uint8_t*>(payload.data()), payload.size());
+  const bool wrote = file.WriteAndCheck(0, src);
   file.Flush();
   char buf[64] = {0};
-  const int got = file.Read(0, buf, sizeof(buf) - 1);
-  Report("S3 file: ok, wrote %d bytes, read back %d bytes: \"%s\"", written, got,
-         buf);
-  if (written != static_cast<int>(payload.size()) || got != written) {
+  uint8_t* dst = reinterpret_cast<uint8_t*>(buf);
+  const bool read_back =
+      file.ReadAndCheck(0, base::span<uint8_t>(dst, sizeof(buf) - 1));
+  const int got = read_back ? static_cast<int>(strlen(buf)) : -1;
+  Report("S3 file: ok, wrote %d of %d bytes, read back %d bytes: \"%s\"",
+         wrote ? static_cast<int>(payload.size()) : -1,
+         static_cast<int>(payload.size()), got, buf);
+  if (!wrote || !read_back) {
     g_all_ok = false;
   }
 }
