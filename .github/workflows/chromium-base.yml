@@ -280,6 +280,10 @@ jobs:
           mkdir -p out/switch-v8
           echo "--- v8 tree present? ---"
           ls -d v8 v8/include 2>/dev/null || echo "NO v8 DIR"
+          echo "--- where is the monolithic target? ---"
+          grep -n "monolithic" v8/BUILD.gn | head -20
+          grep -rn "v8_monolithic" v8/gni/ 2>/dev/null | head -10
+          grep -rn "v8_monolithic" v8/BUILD.gn | head -10
           GN=buildtools/linux64/gn
           [ -x "$GN" ] || GN=gn
           ARGS="$(grep -v '^#' port/chromium/args.gn | tr '\n' ' ')"
