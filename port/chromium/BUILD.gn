@@ -100,6 +100,11 @@ config("nx_link") {
     "-Wl,--wrap=write",
     "-Wl,--wrap=close",
     "-Wl,--wrap=fcntl",
+    # Chromium 用 thread_local 的地方不少；clang 在 AArch64 上把它编译成
+    # `mrs tpidr_el0`，而 Horizon 上这个寄存器是 0（内核和 libnx 都不用），
+    # 于是第一次访问就有 0x0 附近的 Data Abort。nx_tls.cc 负责每线程建块并
+    # 把 TP 指过去；新线程走 wrap 过的 pthread_create。
+    "-Wl,--wrap=pthread_create",
   ]
   # use_partition_alloc=false 之后 GN 不再给我们 PA 的 include 目录，但
   # base/memory/raw_ptr_exclusion.h 仍然无条件 #include
@@ -221,6 +226,7 @@ executable("nx_base_loop") {
     "//port/chromium/shims/stack_trace_stub.cc",
     "//port/chromium/pa_stubs.cc",
     "//port/chromium/nxlog.cc",
+    "//port/chromium/shims/nx_tls.cc",
   ]
   deps = [
     "//base",
@@ -256,6 +262,7 @@ executable("nx_base_rt") {
     "//port/chromium/shims/stack_trace_stub.cc",
     "//port/chromium/pa_stubs.cc",
     "//port/chromium/nxlog.cc",
+    "//port/chromium/shims/nx_tls.cc",
   ]
   deps = [
     "//base",
@@ -278,6 +285,7 @@ executable("nx_v8_hello") {
     "//port/chromium/shims/nxfd_shim.cc",
     "//port/chromium/shims/posix_extra.cc",
     "//port/chromium/nxlog.cc",
+    "//port/chromium/shims/nx_tls.cc",
   ]
   include_dirs = [ "//v8/include" ]
   deps = [ "//v8:v8_monolithic" ]
