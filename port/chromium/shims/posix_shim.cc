@@ -25,30 +25,6 @@ time_t timegm(struct tm* tm) {
   return mktime(tm);
 }
 
-// Horizon has no eventfd. This is a compile/link placeholder only: once the
-// virtual-fd layer (port/README.md, L1-L3) exists these must return a real
-// counter fd, otherwise perfetto's event_fd.cc will fail at startup.
-int eventfd(unsigned int initval, int flags) {
-  (void)initval;
-  (void)flags;
-  errno = ENOSYS;
-  return -1;
-}
-
-int eventfd_read(int fd, eventfd_t* value) {
-  (void)fd;
-  (void)value;
-  errno = ENOSYS;
-  return -1;
-}
-
-int eventfd_write(int fd, eventfd_t value) {
-  (void)fd;
-  (void)value;
-  errno = ENOSYS;
-  return -1;
-}
-
 // perfetto's thread_utils.h (Linux path) calls syscall(SYS_gettid). Horizon has
 // no syscall instruction for this, but libnx gives us a stable thread handle.
 long syscall(long number, ...) {
@@ -59,34 +35,6 @@ long syscall(long number, ...) {
       errno = ENOSYS;
       return -1;
   }
-}
-
-// Horizon has no timerfd either; compile/link placeholder until the virtual-fd
-// layer exists (port/README.md L3). perfetto's periodic_task.cc uses it.
-int timerfd_create(int clockid, int flags) {
-  (void)clockid;
-  (void)flags;
-  errno = ENOSYS;
-  return -1;
-}
-
-int timerfd_settime(int fd,
-                    int flags,
-                    const struct itimerspec* new_value,
-                    struct itimerspec* old_value) {
-  (void)fd;
-  (void)flags;
-  (void)new_value;
-  (void)old_value;
-  errno = ENOSYS;
-  return -1;
-}
-
-int timerfd_gettime(int fd, struct itimerspec* curr_value) {
-  (void)fd;
-  (void)curr_value;
-  errno = ENOSYS;
-  return -1;
 }
 
 // Horizon has no prctl(). Thread naming is cosmetic (no-op, report success);
