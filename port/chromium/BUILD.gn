@@ -294,6 +294,7 @@ if (nx_build_v8) {
       "//port/chromium/shims/posix_extra.cc",
       "//port/chromium/nxlog.cc",
       "//port/chromium/shims/nx_tls.cc",
+      "//port/chromium/shims/v8_linux_stubs.cc",
     ]
     include_dirs = [ "//v8/include" ]
     # v8 BUILD.gn 里 monolithic 静态库的目标名是 v8_monolith（在
