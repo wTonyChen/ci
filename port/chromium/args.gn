@@ -86,3 +86,14 @@ enable_rust_api_from_cpp = false
 # NOTE: Rust stays ENABLED (build/rust/rust_target.gni asserts on it), but M3's
 # smoke target deliberately depends on a pure-C library instead of //base so the
 # link does not drag in Rust std (which needs libunwind). Revisit in M4.
+
+# --- malloc: keep newlib's, do NOT install Chromium's allocator shim ---
+# libnx's own init (`__libnx_init` -> `__appInit` -> `fsdevMountSdmc`) calls
+# malloc *before* any Chromium constructor can run. With PA installed as malloc
+# that first call lands in the shim while PA's root is still uninitialised and
+# ImmediateCrash()es (svcBreak, break address 0x0badf00d00000001).
+# Evidence: sd:/atmosphere/crash_reports/01794613979_010000000000100d.log
+#   PC = nx_base_probe+0x74e90 (svcBreak)   LR = +0x27864 (DelegatedAllocFn)
+#   stack: __libnx_init -> __appInit -> fsdevMountSdmc -> malloc -> shim
+use_allocator_shim = false
+use_partition_alloc_as_malloc = false
