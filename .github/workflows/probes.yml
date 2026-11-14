@@ -26,15 +26,17 @@ jobs:
           cd probes
           bash build-all.sh
 
-      - name: Show artifacts
+      - name: Collect .nro (flat: artifact zip must not nest one dir per probe)
         if: always()
         run: |
-          ls -l probes/build/*/*.nro || echo "(no .nro produced)"
+          mkdir -p probes/dist
+          find probes/build -name '*.nro' -exec cp -f {} probes/dist/ \;
+          ls -l probes/dist || echo "(no .nro produced)"
 
       - name: Upload .nro artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: probes-nro
-          path: probes/build/*/*.nro
+          path: probes/dist/*.nro
           if-no-files-found: warn
