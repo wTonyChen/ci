@@ -269,6 +269,32 @@ jobs:
           fi
           exit 0
 
+      - name: upload nx_smoke ELF (for offline analysis)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nx_smoke-elf
+          path: |
+            work/src/out/switch/nx_smoke
+            work/src/out/switch/nx_hello
+            work/src/out/switch/nx_base_smoke
+            work/src/out/switch/nx_base_link
+            work/src/out/switch/nx_base_probe
+            work/src/out/switch/nx_base_rt
+            work/src/out/switch/nx_base_loop
+            work/src/out/switch/nx_base_mem
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: upload NRO artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nx_smoke-nro
+          path: work/src/out/switch/*.nro
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: V8 experimental build (non-blocking)
         continue-on-error: true
         timeout-minutes: 120
@@ -316,31 +342,5 @@ jobs:
             work/src/out/switch-v8/nx_v8_hello
             work/src/out/switch-v8/nx_v8_hello.nro
             work/src/out/switch-v8/v8-build.log
-          if-no-files-found: warn
-          retention-days: 14
-
-      - name: upload nx_smoke ELF (for offline analysis)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: nx_smoke-elf
-          path: |
-            work/src/out/switch/nx_smoke
-            work/src/out/switch/nx_hello
-            work/src/out/switch/nx_base_smoke
-            work/src/out/switch/nx_base_link
-            work/src/out/switch/nx_base_probe
-            work/src/out/switch/nx_base_rt
-            work/src/out/switch/nx_base_loop
-            work/src/out/switch/nx_base_mem
-          if-no-files-found: warn
-          retention-days: 14
-
-      - name: upload NRO artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: nx_smoke-nro
-          path: work/src/out/switch/*.nro
           if-no-files-found: warn
           retention-days: 14
