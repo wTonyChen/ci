@@ -5,6 +5,11 @@ name: chromium-base
 
 on:
   workflow_dispatch:
+    inputs:
+      v8:
+        description: "Also build the V8 experiment (adds ~90 min; base packages are unaffected)"
+        required: false
+        default: "false"
 
 jobs:
   build:
@@ -296,6 +301,7 @@ jobs:
           retention-days: 14
 
       - name: V8 experimental build (non-blocking)
+        if: github.event.inputs.v8 == 'true'
         continue-on-error: true
         timeout-minutes: 120
         run: |
@@ -334,6 +340,7 @@ jobs:
           exit 0
 
       - name: upload V8 experiment (if any)
+        if: github.event.inputs.v8 == 'true' 
         if: always()
         uses: actions/upload-artifact@v4
         with:
