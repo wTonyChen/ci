@@ -118,6 +118,8 @@ executable("nx_smoke") {
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
     "//port/chromium/shims/nxfd_shim.cc",
+    "//port/chromium/shims/posix_extra.cc",
+    "//port/chromium/shims/stack_trace_stub.cc",
   ]
   deps = [ "//third_party/zlib" ]
   # NOTE: `configs = [...]` is rejected ("Replacing nonempty list"); the default
@@ -139,6 +141,8 @@ executable("nx_base_probe") {
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
     "//port/chromium/shims/nxfd_shim.cc",
+    "//port/chromium/shims/posix_extra.cc",
+    "//port/chromium/shims/stack_trace_stub.cc",
     "//port/chromium/pa_stubs.cc",
     "//port/chromium/nxlog.cc",
   ]
@@ -154,6 +158,8 @@ executable("nx_base_link") {
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
     "//port/chromium/shims/nxfd_shim.cc",
+    "//port/chromium/shims/posix_extra.cc",
+    "//port/chromium/shims/stack_trace_stub.cc",
     "//port/chromium/pa_stubs.cc",
     "//port/chromium/nxlog.cc",
   ]
@@ -171,6 +177,8 @@ executable("nx_base_smoke") {
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
     "//port/chromium/shims/nxfd_shim.cc",
+    "//port/chromium/shims/posix_extra.cc",
+    "//port/chromium/shims/stack_trace_stub.cc",
     # partition_alloc emits MTE helper calls on this target but not their
     # definitions; they are identity functions without MTE hardware.
     "//port/chromium/pa_stubs.cc",
@@ -189,6 +197,8 @@ executable("nx_base_loop") {
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
     "//port/chromium/shims/nxfd_shim.cc",
+    "//port/chromium/shims/posix_extra.cc",
+    "//port/chromium/shims/stack_trace_stub.cc",
     "//port/chromium/pa_stubs.cc",
     "//port/chromium/nxlog.cc",
   ]
@@ -204,6 +214,8 @@ executable("nx_base_mem") {
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
     "//port/chromium/shims/nxfd_shim.cc",
+    "//port/chromium/shims/posix_extra.cc",
+    "//port/chromium/shims/stack_trace_stub.cc",
     "//port/chromium/nxlog.cc",
   ]
   configs += [ ":nx_link" ]
@@ -216,6 +228,8 @@ executable("nx_base_rt") {
     "//port/chromium/shims/posix_shim.cc",
     "//port/chromium/shims/nx_extra_shim.cc",
     "//port/chromium/shims/nxfd_shim.cc",
+    "//port/chromium/shims/posix_extra.cc",
+    "//port/chromium/shims/stack_trace_stub.cc",
     "//port/chromium/pa_stubs.cc",
     "//port/chromium/nxlog.cc",
   ]
