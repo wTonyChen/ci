@@ -14,6 +14,9 @@
 #include "libplatform/libplatform.h"
 #include "v8.h"
 
+// Horizon 上 TPIDR_EL0 是 0；V8 内部也有 thread_local。见 shims/nx_tls.cc。
+extern "C" void nx_tls_setup_current_thread(void);
+
 namespace {
 
 void Report(const char* fmt, ...) {
@@ -35,6 +38,7 @@ void Report(const char* fmt, ...) {
 
 int main(int argc, char** argv) {
   consoleInit(NULL);
+  nx_tls_setup_current_thread();
   Report("V8 P1 console up");
 
   Report("V8 P2 NewDefaultPlatform");
