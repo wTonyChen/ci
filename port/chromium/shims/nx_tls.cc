@@ -166,7 +166,25 @@ extern "C" int __wrap_pthread_create(pthread_t* t, const pthread_attr_t* attr,
     return -1;  // ENOMEM 的量级，调用方会当失败处理
   a->fn = fn;
   a->arg = arg;
-  const int rc = __real_pthread_create(t, attr, Trampoline, a);
+  // Give every thread a stack Chromium can actually breathe in. newlib/libnx
+  // default to a small worker stack; a Chromium worker runs real code (thread
+  // local init, sequence manager, task) and silently walks off the end.
+  pthread_attr_t local;
+  const pthread_attr_t* use = attr;
+  if (attr == nullptr) {
+    pthread_attr_init(&local);
+    use = &local;
+  } else {
+    local = *attr;
+  }
+  size_t stack_size = 0;
+  if (pthread_attr_getstacksize(use, &stack_size) != 0 ||
+      stack_size < (512u * 1024u)) {
+    stack_size = 1024u * 1024u;
+    pthread_attr_setstacksize(&local, stack_size);
+    use = &local;
+  }
+  const int rc = __real_pthread_create(t, use, Trampoline, a);
   if (rc == 0) {
     ++g_threads_created;
   }
@@ -181,6 +199,10 @@ extern "C" int __wrap_pthread_create(pthread_t* t, const pthread_attr_t* attr,
     const char* mid = " rc=";
     while (*mid) line[n++] = *mid++;
     n += AppendUint(line + n, static_cast<unsigned>(rc < 0 ? 0 : rc));
+    const char* st = " stack=";
+    while (*st) line[n++] = *st++;
+    n += AppendUint(line + n, static_cast<unsigned>(stack_size / 1024));
+    line[n++] = 'K';
     line[n++] = '\n';
     line[n] = 0;
     nx_log_str(line);
