@@ -101,6 +101,12 @@ config("nx_link") {
     "-Wl,--wrap=close",
     "-Wl,--wrap=fcntl",
   ]
+  # use_partition_alloc=false 之后 GN 不再给我们 PA 的 include 目录，但
+  # base/memory/raw_ptr_exclusion.h 仍然无条件 #include
+  # "partition_alloc/pointers/raw_ptr_exclusion.h"（只是声明，header-only），
+  # 所以把 PA 的源码根目录手动加回来，否则任何间接包含它的 base 头都编不过。
+  include_dirs = [ "//base/allocator/partition_allocator/src" ]
+
   libs = [
     # //base is C++: it needs the devkitA64 C++ runtime before libnx.
     "stdc++",
