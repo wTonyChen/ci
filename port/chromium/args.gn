@@ -95,5 +95,11 @@ enable_rust_api_from_cpp = false
 # Evidence: sd:/atmosphere/crash_reports/01794613979_010000000000100d.log
 #   PC = nx_base_probe+0x74e90 (svcBreak)   LR = +0x27864 (DelegatedAllocFn)
 #   stack: __libnx_init -> __appInit -> fsdevMountSdmc -> malloc -> shim
+# NOTE: use_partition_alloc_as_malloc is *derived* (use_partition_alloc &&
+# use_allocator_shim && ...), so setting it here has no effect. Turning
+# use_partition_alloc off is the configuration Chromium itself supports for
+# "no PartitionAlloc at all" (Cronet): partition_alloc.gni then zeroes out
+# use_partition_alloc_as_malloc / BRP / raw_ptr impl in one place, so no
+# allocator.gni assert fires.
+use_partition_alloc = false
 use_allocator_shim = false
-use_partition_alloc_as_malloc = false
